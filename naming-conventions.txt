@@ -1,0 +1,6 @@
+Plugin Name -- IO
+Text domain -- cf-io
+Function prefix -- cfio
+Class prefix -- {{Core_Prefix}}
+Root namespace -- calderawp\cfio
+Hook Prefix -- cfio
