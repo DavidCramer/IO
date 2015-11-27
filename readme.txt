@@ -1,9 +1,9 @@
 === IO ===
-Contributors: Desertsnowman, Shelob9
-Donate link: https://CalderaWP.com
+Contributors: Desertsnowman
+Donate link: http://cramer.co.za
 Tags:
 Requires at least: 3.9
-Tested up to: 4.2
+Tested up to: 4.4
 Stable tag: 0.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -13,8 +13,6 @@ Create Data Management Structures
 == Description ==
 
 Create Data Management Structures
-
-IO is a free plugin by [CalderaWP](https://CalderaWP.com).
 
 == Installation ==
 
