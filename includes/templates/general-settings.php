@@ -51,14 +51,71 @@
 			<label for="cf_io-editing">
 				<?php _e( 'Enable Editing', 'cf-io' ); ?>
 			</label>
-			<label style="width: auto; margin: 0px;"><input type="checkbox" name="editing" value="1" {{#if editing}}checked="checked"{{/if}} id="cf_io-editing"> <?php _e('Show the Edit button on entries','cf-io'); ?></label>
+			<label style="width: auto; margin: 0px;"><input type="checkbox" name="editing" data-live-sync="true" value="1" {{#if editing}}checked="checked"{{/if}} id="cf_io-editing"> <?php _e('Show the Edit button on entries','cf-io'); ?></label>
 		</div>
+		
+		{{#if editing}}
+		<div id="cf-io-editing-rules">
+			<div class="cf-io-config-group">
+				<label><?php echo __('Editing Roles', 'cf-io'); ?> </label>
+				<div class="cf-io-config-field" style="max-width: 500px; display: inline-block;">
+				<label><input type="checkbox" class="field-config visible-all-roles" data-live-sync="true" data-set="form_role" value="1" name="edit_roles[_all_roles]" {{#if edit_roles/_all_roles}}checked="checked"{{/if}}> <?php echo __('All'); ?></label>
+				{{#unless edit_roles/_all_roles}}
+				<hr>
+				<?php
+				global $wp_roles;
+			    $all_roles = $wp_roles->roles;
+			    $editable_roles = apply_filters( 'editable_roles', $all_roles);
+				
+				foreach($editable_roles as $role=>$role_details){
+
+					?>
+					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="edit_roles[<?php echo $role; ?>]" value="1"  {{#if edit_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
+					<?php 
+				}
+
+				?>
+				{{/unless}}
+				<hr>
+				</div>
+			</div>	
+		</div>		
+		{{/if}}
 		<div class="cf-io-config-group">
 			<label for="cf_io-capture">
 				<?php _e( 'Enable Capture', 'cf-io' ); ?>
 			</label>
-			<label style="width: auto; margin: 0px;"><input type="checkbox" name="capture" value="1" {{#if capture}}checked="checked"{{/if}} id="cf_io-capture"> <?php _e('Adds the "Add Entry" button','cf-io'); ?></label>
+			<label style="width: auto; margin: 0px;"><input type="checkbox" data-live-sync="true" name="capture" value="1" {{#if capture}}checked="checked"{{/if}} id="cf_io-capture"> <?php _e('Adds the "Add Entry" button','cf-io'); ?></label>
 		</div>
+
+		{{#if capture}}
+		<div id="cf-io-capture-rules">
+			<div class="cf-io-config-group">
+				<label><?php echo __('Capture Roles', 'cf-io'); ?> </label>
+				<div class="cf-io-config-field" style="max-width: 500px; display: inline-block;">
+				<label><input type="checkbox" class="field-config visible-all-roles" data-live-sync="true" data-set="form_role" value="1" name="capture_roles[_all_roles]" {{#if capture_roles/_all_roles}}checked="checked"{{/if}}> <?php echo __('All'); ?></label>
+				{{#unless capture_roles/_all_roles}}
+				<hr>
+				<?php
+				global $wp_roles;
+			    $all_roles = $wp_roles->roles;
+			    $editable_roles = apply_filters( 'editable_roles', $all_roles);
+				
+				foreach($editable_roles as $role=>$role_details){
+
+					?>
+					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="capture_roles[<?php echo $role; ?>]" value="1"  {{#if capture_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
+					<?php 
+				}
+
+				?>
+				{{/unless}}
+				<hr>
+				</div>
+			</div>	
+		</div>		
+		{{/if}}
+
 		<div class="cf-io-config-group">
 			<label for="cf_io-lock_form">
 				<?php _e( 'Lock Form', 'cf-io' ); ?>
@@ -86,6 +143,8 @@
 			</select>
 
 		</div>
+
+
 		{{#is location value="primary"}}
   		<div class="cf-io-config-group">
 			<label for="cf_io-priority">
@@ -93,6 +152,23 @@
 			</label>
 			<input type="number" style="width:60px;" name="priority" value="{{#if priority}}{{priority}}{{else}}25{{/if}}" id="cf_io-priority" class="priority-field">
 		</div>
+  		<div class="cf-io-config-group">
+			<label for="cf_io-icon">
+				<?php _e( 'Menu Icon', 'cf-io' ); ?>
+			</label>
+			<input name="icon" value="{{#if icon}}{{icon}}{{else}}dashicons-admin-generic{{/if}}" id="cf_io-icon" class="icon-field" type="text" />
+			<input class="button dashicons-picker" type="button" value="Choose Icon" data-target="#cf_io-icon" />
+			{{#script}}
+			jQuery( function( $ ) {
+
+				$( function () {
+					$( '.dashicons-picker' ).dashiconsPicker();
+				} );	
+
+			});
+			{{/script}}			
+		</div>
+
 		{{/is}}
 		{{#is location value="child"}}
   		<div class="cf-io-config-group">
@@ -133,10 +209,11 @@
 					<?php _e( 'Relation Field Connection', 'cf-io' ); ?>
 				</label>
 		
-				<?php /* ?>
+				
 				<?php _e( 'From', 'cf-io' ); ?>: 
-				<select style="width:395px;" name="relation_fields[from]" id="cf-io-form-relation_field">
-					<option></option>
+
+				<select name="relation_field_from" id="cf-io-form-relation_field_from">
+					<option value="_entry_id"><?php _e( 'Entry ID', 'cf-io' ); ?>: </option>
 					<?php 
 						foreach ($cf_ios as $io_id => $io_config) {
 							if( $io_id === $cf_io['id'] ){
@@ -147,15 +224,15 @@
 									continue;
 								}
 								?>
-								<option value="<?php echo $field_id; ?>" {{#is relation_field value="<?php echo $io_id; ?>"}}selected="selected"{{/is}}><?php echo $field['name']; ?></option>
+								<option value="<?php echo $field_id; ?>" {{#is relation_field_from value="<?php echo $field_id; ?>"}}selected="selected"{{/is}}><?php echo $field['name']; ?> [<?php echo $field['type']; ?>]</option>
 								<?php
 							}
 						}
 					?>
 				</select>
-				<?php */ ?>
 				
-				<select style="width:395px;" name="relation_field" id="cf-io-form-relation_field">
+				<?php _e( 'To', 'cf-io' ); ?>: 
+				<select name="relation_field" id="cf-io-form-relation_field">
 					<option value="_io_parent">- Internal</option>
 					{{#each fields}}
 						{{#if type}}

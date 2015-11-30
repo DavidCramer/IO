@@ -1,15 +1,15 @@
 {
-  "name": "cf-io",
-  "version": "0.0.1",
+  "name": "io",
+  "version": "1.0.0-b1",
   "description": "Create Data Management Structures",
   "repository": {
     "type": "git",
-    "url": "https://github.com/CalderaWP/cf-io"
+    "url": "https://github.com/Desertsnowman/IO"
   },
   "author": "CalderaWP",
   "license": "GPLv2+",
   "bugs": {
-    "url": "https://github.com/CalderaWP/cf-io/issues"
+    "url": "https://github.com/Desertsnowman/IO/issues"
   },
   "devDependencies": {
     "grunt": "~0.4.2",

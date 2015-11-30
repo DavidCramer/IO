@@ -1,3 +1,4 @@
+
 <style type="text/css">
 
 #viewer-{{id}}_baldrickModal .baldrick-modal-title .modal-label,
@@ -12,13 +13,20 @@
 #newentry-{{form}}_baldrickModal.baldrick-modal-wrap .navtabs > li a {
   color: {{color}};
 }
+.add-new-h2.status_toggles-{{id}}:hover,
+.add-new-h2.status_toggles-{{id}}.active,
 #viewer-{{id}}_baldrickModal.baldrick-modal-wrap .navtabs > li.selected > a,
 #newentry-{{form}}_baldrickModal.baldrick-modal-wrap .navtabs > li.selected > a {
   background: none repeat scroll 0 0 {{color}};
 }
+.add-new-h2.status_toggles-{{id}}.active,
+.add-new-h2.status_toggles-{{id}}:hover{
+	color: #fff;
+}
 </style>
 <div class="io-panel-wrapper">
 <div style="" class="caldera-entry-exporter">
+	<?php if( true === $can_capture ){ ?>
 	{{#if parent_id}}
 		<button type="button" class="button cfajax-trigger"
 			style="margin: 1px 12px 0px 0px;"
@@ -33,7 +41,7 @@
 			data-callback="calders_forms_init_conditions"		
 			data-io_parent="{{parent_id}}"
 			data-io_modal="{{id}}"
-			data-modal-buttons='Save Entry|{ "data-for" : "form.{{form}}" {{#if parent_id}},"data-io_parent" : "{{parent_id}}"{{/if}} {{#if relation_field}},"data-io_relation": "{{relation_field}}"{{/if}} }'
+			data-modal-buttons='Save Entry|{ "data-for" : "form.{{form}}" {{#if parent_id}},"data-io_parent" : "{{parent_id}}"{{/if}} {{#if relation_field}},"data-io_relation": "{{relation_field}}"{{/if}}{{#if relation_field_from}},"data-io_relation_from": "{{relation_field_from}}"{{/if}} }'
 		>
 			<?php _e('Add Entry', 'cf-io') ; ?>
 		</button>
@@ -42,24 +50,30 @@
 		<input type="hidden" name="params[relation_field]" value="{{relation_field}}">
 		{{/if}}			
 	{{/if}}
+	<?php } ?>
 	<span style="" class="toggle_option_preview">
-		<label style="margin-top: 1px;" class="status_toggles button {{#is data/params/status value="active"}}button-primary{{/is}}" type="button" >Active <input style="display:none;" type="radio" value="active" name="params[status]" {{#is data/params/status value="active"}}checked="checked"{{/is}}> <span class="current-status-count">{{data/status_totals/active/total}}</span></label>
-		<label style="margin-top: 1px; margin-right: 10px;" class="status_toggles button {{#is data/params/status value="trash"}}button-primary{{/is}}" type="button" >Trash  <input style="display:none;" type="radio" value="trash" name="params[status]" {{#is data/params/status value="trash"}}checked="checked"{{/is}}> <span class="current-status-count">{{data/status_totals/trash/total}}</span></label>
+		<label style="margin-top: 1px; margin-right: -7px; border-radius: 2px 0px 0px 2px;" class="add-new-h2 status_toggles status_toggles-{{id}} {{#is data/params/status value="active"}}active{{/is}}" type="button" >Active <input style="display:none;" type="radio" value="active" name="params[status]" {{#is data/params/status value="active"}}checked="checked"{{/is}}> <span class="current-status-count">{{data/status_totals/active/total}}</span></label>
+		<label style="margin-top: 1px; margin-right: 10px; border-radius: 0px 2px 2px 0;" class="add-new-h2 status_toggles status_toggles-{{id}} {{#is data/params/status value="trash"}}active{{/is}}" type="button" >Trash  <input style="display:none;" type="radio" value="trash" name="params[status]" {{#is data/params/status value="trash"}}checked="checked"{{/is}}> <span class="current-status-count">{{data/status_totals/trash/total}}</span></label>
 	</span>
 
 	<span>
 		Show <input type="number" class="screen-per-page" name="params[limit]" value="{{#if data/params/limit}}{{data/params/limit}}{{else}}20{{/if}}" id="cf-entries-list-items"> &nbsp;
+		<?php if( true === $can_edit ){ ?>
 		<select style="vertical-align: initial;" name="params[action]" id="cf_bulk_action">
 			<option value="" selected="selected">Bulk Actions</option>
-			<option value="export">Export Selected</option>
+			{{#is data/params/status value="active"}}
 			<option value="trash">Move to Trash</option>
-		</select>
+			{{else}}
+			<option value="active">Restore Selected</option>
+			<option value="delete">Delete Permanently</option>
+			{{/is}}
 
+		</select>
+		<?php } ?>
 		<button class="button cf-bulk-action wp-baldrick io-entry-loader io-entry-loader-{{form}}" type="button"
 			
 			data-page="1"
 			data-load-element="#cf-io-save-indicator"
-			data-fields="{{#each fields}}{{#unless hide}}{{#if type}}{{@key}},{{/if}}{{/unless}}{{/each}}"
 			data-status="active"
 			data-form="{{form}}"
 			data-target="#entry-trigger-{{id}}"
@@ -94,13 +108,15 @@
 <hr>
 <input type="hidden" name="params[sort]" value="{{#if data/params/sort}}{{data/params/sort}}{{else}}datestamp{{/if}}">
 <input type="hidden" name="params[sort_order]" value="desc">
-<table class="wp-list-table widefat fixed striped">
+<table class="wp-list-table widefat fixed striped io-table-viewer">
 	<thead>
 		<tr>
+			<?php if( true === $can_edit ){ ?>
 			<td class="manage-column column-cb check-column" id="cb">
 				<label for="cb-select-all-1" class="screen-reader-text">Select All</label>
-				<input type="checkbox" id="cb-select-all-1">
+				<input type="checkbox" class="io-bulkcheck">
 			</td>		
+			<?php } ?>
 			{{#each fields}}
 				{{#unless hide}}
 
@@ -128,10 +144,11 @@
 		{{#if data/entries}}
 			{{#each data/entries}}
 			<tr id="entry_row_{{id}}">
+				<?php if( true === $can_edit ){ ?>
 				<th class="check-column" scope="row">
-					<input type="checkbox" value="{{id}}" name="post[]" id="cb-select-{{id}}">
+					<input type="checkbox" value="{{id}}" name="params[entry][]" class="io-entrycheck" id="io-select-{{id}}">
 				</th>	
-
+				<?php } ?>
 				{{#each ../fields}}
 					{{#unless hide}}
 
@@ -143,7 +160,7 @@
 				{{/each}}
 
 				<td style="text-align: right; white-space: nowrap;">
-
+				<?php if( true === $can_edit ){ ?>
 					<button 
 					data-items="{{id}}" 
 					data-action="cf_bulk_action" 
@@ -182,6 +199,7 @@
 					>Edit</button>
 					{{/is}}
 					{{/if}}
+				<?php } ?>
 
 					<button type="button" class="button button-small wp-baldrick"
 						data-action="get_entry"

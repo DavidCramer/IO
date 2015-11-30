@@ -160,7 +160,9 @@ class options {
 			if( !empty( $config['lock_form'] ) ){
 				$update['lock_form'] = $config['lock_form'];
 			}
-			
+			if( !empty( $config['icon'] ) ){
+				$update['icon'] = $config['icon'];
+			}
 			// add search form to registery
 			if( ! empty( $config['search_form'] ) ){
 				$updated_registery['search_form'] = $config['search_form'];

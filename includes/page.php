@@ -10,6 +10,33 @@
  */
 
 $cf_io = \calderawp\cfio\options::get_single( $form_base );
+$can_capture = false;
+if( !empty( $cf_io['capture_roles'] ) ){
+ 	if( !empty( $cf_io['capture_roles']['_all_roles'] ) ){
+ 		$can_capture = true;
+ 	}else{
+ 		foreach( $cf_io['capture_roles'] as $role => $enabled ){
+ 			if( current_user_can( $role ) ){
+ 				$can_capture = true;
+ 				break;
+ 			}
+ 		}
+ 	}
+}
+
+$can_edit = false;
+if( !empty( $cf_io['edit_roles'] ) ){
+ 	if( !empty( $cf_io['edit_roles']['_all_roles'] ) ){
+ 		$can_edit = true;
+ 	}else{
+ 		foreach( $cf_io['edit_roles'] as $role => $enabled ){
+ 			if( current_user_can( $role ) ){
+ 				$can_edit = true;
+ 				break;
+ 			}
+ 		}
+ 	}
+}
 
 ?>
 <style type="text/css">
@@ -99,12 +126,7 @@ $cf_io['_current_tab'] = '#cf-io-panel-form';
 		include CFIO_PATH . 'includes/templates/page-main-ui.php';
 	?>	
 </script>
-<script type="text/html" id="io-list-template">
-	<?php
-		// pull in the table list
-		include CFIO_PATH . 'includes/templates/template-table-list.php';
-	?>
-</script>
+
 <script type="text/html" id="io-viewer-template">
 
 
@@ -125,7 +147,14 @@ $cf_io['_current_tab'] = '#cf-io-panel-form';
 			<input name="slug" value="{{slug}}" type="hidden">
 			<input name="fields" value="{{json fields}}" type="hidden">
 			<input name="form" value="{{form}}" type="hidden">
-			<input name="parent_id" value="{{../entry_id}}" type="hidden">
+			{{#is relation_field_from value="_entry_id"}}
+				<input name="parent_id" value="{{../entry_id}}" type="hidden">
+			{{else}}
+				
+				{{#find ../data relation_field_from}}
+				<input name="parent_id" value="{{value}}" type="hidden">
+				{{/find}}
+			{{/is}}
 			{{#if relation}}
 			<input name="relation" value="{{relation}}" type="hidden">
 			{{/if}}
@@ -143,7 +172,7 @@ $cf_io['_current_tab'] = '#cf-io-panel-form';
 			<input type="hidden" name="data" value="{{#if data}}{{json data}}{{/if}}" class="wp-baldrick" 
 				data-request="#panel-interface-{{@key}}-form"
 				data-target="#panel-interface-{{@key}}"
-				data-template="#io-list-template"
+				data-template="#io-list-template-{{id}}"
 				data-event="change"
 				id="entry-trigger-{{id}}"
 				data-autoload="true"
@@ -182,7 +211,7 @@ $cf_io['_current_tab'] = '#cf-io-panel-form';
 <?php
 $cf_ios = \calderawp\cfio\options::get_registry();
 $done = array();
-foreach( $cf_ios as $cf_io_config ){
+foreach( $cf_ios as $cf_io_id=>$cf_io_config ){
 	if( empty( $cf_io_config['form'] ) || in_array( $cf_io_config['form'], $done ) ){
 		continue;
 	}
@@ -193,6 +222,43 @@ foreach( $cf_ios as $cf_io_config ){
 jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-entry-loader-<?php echo $cf_io_config['form']; ?>').trigger('click');
 {{/script}}
 </script>
+
+<script type="text/html" id="io-list-template-<?php echo $cf_io_id; ?>">
+	<?php
+		$cf_io_config = \calderawp\cfio\options::get_single( $cf_io_id );
+		$can_capture = false;
+		if( !empty( $cf_io_config['capture_roles'] ) ){
+		 	if( !empty( $cf_io_config['capture_roles']['_all_roles'] ) ){
+		 		$can_capture = true;
+		 	}else{
+		 		foreach( $cf_io_config['capture_roles'] as $role => $enabled ){
+		 			if( current_user_can( $role ) ){
+		 				$can_capture = true;
+		 				break;
+		 			}
+		 		}
+		 	}
+		}
+
+		$can_edit = false;
+		if( !empty( $cf_io_config['edit_roles'] ) ){
+		 	if( !empty( $cf_io_config['edit_roles']['_all_roles'] ) ){
+		 		$can_edit = true;
+		 	}else{
+		 		foreach( $cf_io_config['edit_roles'] as $role => $enabled ){
+		 			if( current_user_can( $role ) ){
+		 				$can_edit = true;
+		 				break;
+		 			}
+		 		}
+		 	}
+		}
+
+		// pull in the table list
+		include CFIO_PATH . 'includes/templates/template-table-list.php';
+	?>
+</script>
+
 <?php 
 
 }
@@ -261,6 +327,9 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 	jQuery( function( $ ){
 		$(document).on( 'change', "[name^='params[']", function(){
 			var clicked = $( this );
+			if( clicked.is(':checkbox') || clicked.is('select') ){
+				return;
+			}
 			clicked.addClass('disabled');
 			clicked.closest( '.io-panel-wrapper' ).find('.io-entry-loader').trigger('click');
 		} );

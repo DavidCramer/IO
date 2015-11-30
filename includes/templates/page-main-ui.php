@@ -11,7 +11,7 @@ if( empty( $cf_io['width'] ) ){
 			<?php //echo CFIO_VER; ?>
 		</span>
 		<span class="cf-io-nav-separator"></span>
-		<?php if( !empty( $cf_io['capture'] ) ) { ?>
+		<?php if( true === $can_capture ){ ?>
 		<span class="add-new-h2 cfajax-trigger"
 			data-request="<?php echo site_url( "/cf-api/" . $cf_io['form'] ."/" ); ?>" 
 			data-load-element="#cf-io-save-indicator"

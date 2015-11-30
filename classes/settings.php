@@ -215,8 +215,7 @@ class settings extends core{
 				__( 'IO', $this->plugin_slug ),
 				__( 'IO', $this->plugin_slug )
 				, 'manage_options', 'cf_io',
-				array( $this, 'create_admin_page' ),
-				'dashicons-marker'
+				array( $this, 'create_admin_page' )
 			);
 
 
@@ -242,12 +241,16 @@ class settings extends core{
 							if( empty( $cf_io['priority'] ) ){
 								$cf_io['priority'] = 57.99923;
 							}
+							if( empty( $cf_io['icon'] ) ){
+								$cf_io['icon'] = 'dashicons-admin-generic';
+							}
+							
 							$this->plugin_screen_hook_suffix[ 'cf_io-' . $cf_io['id'] ] = add_menu_page(
 								$cf_io['name'],
 								$cf_io['name'],
 								'manage_options', 'cf_io-' . $cf_io['id'],
 								array( $this, 'create_admin_page' ),
-								'dashicons-marker',
+								$cf_io['icon'],
 								$cf_io['priority']
 							);
 							break;

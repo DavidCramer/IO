@@ -526,3 +526,17 @@ h4 > small.description {
 .pac-container{
   z-index: 99999999;
 }
+
+.status_toggles {
+  background: #e0e0e0 none repeat scroll 0 0;
+  border: medium none;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 4px;
+  padding: 4px 8px;
+  position: relative;
+  text-decoration: none;
+  text-shadow: none;
+  top: -3px;
+}

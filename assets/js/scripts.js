@@ -561,7 +561,31 @@ jQuery( function($){
 		input.focus().trigger('init.magic');
 
 	});
+
+	$('body').on('change', '.io-bulkcheck', function(){
+
+		var checked = $(this),
+			parent = checked.closest('.io-table-viewer'),
+			checks = parent.find('.io-entrycheck'),
+			action = $('#io_bulk_action');
+
+		checks.prop('checked', checked.prop('checked'));
+
+	});
 	
+	$('body').on('change', '.io-entrycheck', function(){
+
+		var checkall	= $('.io-bulkcheck'),
+			allchecks	= $('.io-entrycheck'),
+			checked 	= $('.io-entrycheck:checked');
+
+		if(allchecks.length != checked.length){
+			checkall.prop('checked', false);
+		}else{
+			checkall.prop('checked', true);
+		}
+
+	});	
 
 	// initialize live sync rebuild
 	$(document).on('change', '[data-live-sync]', function(e){

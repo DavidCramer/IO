@@ -37,11 +37,13 @@
 	global $wpdb;
 	
 	foreach( $cf_ios as $cf_io_id => $cf_io ){
-
+		if( empty( $cf_io['icon'] ) ){
+			$cf_io['icon'] = 'dashicons-admin-generic';
+		}
 ?>
 
 	<div class="cf-io-card-item" id="cf_io-<?php echo $cf_io[ 'id' ]; ?>">
-		<span class="dashicons dashicons-marker cf-io-card-icon"></span>
+		<span class="dashicons <?php echo $cf_io['icon']; ?> cf-io-card-icon"></span>
 		<div class="cf-io-card-content">
 			<h4>
 				<?php echo $cf_io[ 'name' ]; ?>

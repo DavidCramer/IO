@@ -10,7 +10,7 @@
  * Plugin Name: IO
  * Plugin URI:  http://CalderaWP.com
  * Description: Create Data Management Structures
- * Version:     0.0.1
+ * Version:     1.0.0-b1
  * Author:      David Cramer
  * Author URI:  https://CalderaWP.com
  * Text Domain: cf-io
@@ -27,7 +27,7 @@ if ( ! defined( 'WPINC' ) ) {
 define('CFIO_PATH',  plugin_dir_path( __FILE__ ) );
 define('CFIO_CORE',  __FILE__ );
 define('CFIO_URL',  plugin_dir_url( __FILE__ ) );
-define('CFIO_VER',  '0.0.1' );
+define('CFIO_VER',  '1.0.0-b1' );
 
 
 
