@@ -3,7 +3,7 @@
 if( empty( $cf_io['width'] ) ){
 	$cf_io['width'] = 550;
 }
-
+if( is_admin() ){
 ?><div class="cf-io-main-headercaldera">
 		<h1 class="cf-io-main-title">
 		<?php echo $cf_io['name']; ?> 
@@ -35,16 +35,6 @@ if( empty( $cf_io['width'] ) ){
 		</span>
 
 	</h1>
-
-
-		<div class="updated_notice_box">
-		<?php _e( 'Updated Successfully', 'cf-io' ); ?>
-	</div>
-	<div class="error_notice_box">
-		<?php _e( 'Could not save changes.', 'cf-io' ); ?>
-	</div>
-	<ul class="cf-io-header-tabs cf-io-nav-tabs">
-				
 		
 				
 	</ul>
@@ -61,7 +51,9 @@ if( empty( $cf_io['width'] ) ){
 
 	</ul>
 </div>
-
+<?php }else{ ?>
+<span class="wp-baldrick" id="cf-io-field-sync" data-event="refresh" data-target="#cf-io-main-canvas" data-before="cfio_canvas_reset" data-callback="cfio_canvas_init" data-type="json" data-request="#cf-io-live-config" data-template="#main-ui-template"></span>
+<?php	} ?>
 <form class="caldera-main-form has-sub-nav" id="cf-io-main-form" action="?page=cf_io" method="POST">
 	<?php wp_nonce_field( 'cf-io', 'cf-io-setup' ); ?>
 	<input type="hidden" value="{{id}}" name="id" id="cf_io-id">
@@ -81,7 +73,7 @@ if( empty( $cf_io['width'] ) ){
 	{{#if relation_field}}
 	<input type="hidden" value="{{relation_field}}" name="relation_field">
 	{{/if}}
-		<div id="cf-io-panel-form" class="cf-io-editor-panel" {{#is _current_tab value="#cf-io-panel-form"}}{{else}} style="display:none;" {{/is}}>		
+	<div id="cf-io-panel-form" class="cf-io-editor-panel" {{#is _current_tab value="#cf-io-panel-form"}}{{else}} style="display:none;" {{/is}}>		
 		<h4>
 			<?php _e('Entry Browser', 'cf-io') ; ?>
 			<small class="description">

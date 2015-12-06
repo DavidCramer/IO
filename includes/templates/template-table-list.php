@@ -24,37 +24,45 @@
 	color: #fff;
 }
 </style>
+<input name="toggle" value="{{toggle}}" type="hidden">
 <div class="io-panel-wrapper">
 <div style="" class="caldera-entry-exporter">
+
+	{{#unless params/filters}}
+	<label style="margin: 1px 12px 0px 0px;" class="button wp-baldrick" type="button" {{#if parent_id}}data-target="{{id}}"{{/if}} data-add-node="params.filters" data-node-default='{"type":"and"}'>Add Filter</label>
+	{{else}}
+	<label style="margin: 1px 12px 0px 0px;" class="button button-primary" data-remove-element=".filter-wrapper" type="button">Remove Filters</label>
+	{{/unless}}
 	<?php if( true === $can_capture ){ ?>
-	{{#if parent_id}}
-		<button type="button" class="button cfajax-trigger"
-			style="margin: 1px 12px 0px 0px;"
-			data-request="<?php echo site_url( "/cf-api/" ); ?>{{form}}/" 
-			data-load-element="#cf-io-save-indicator"
-			data-modal="newentry-{{form}}"
-			data-modal-title="<?php echo esc_attr( __('Add Entry', 'cf-io') ) ; ?>"
-			data-method="get"
-			data-modal-width="{{width}}"
-			data-modal-height="auto"
-			data-modal-element="div"
-			data-callback="calders_forms_init_conditions"		
-			data-io_parent="{{parent_id}}"
-			data-io_modal="{{id}}"
-			data-modal-buttons='Save Entry|{ "data-for" : "form.{{form}}" {{#if parent_id}},"data-io_parent" : "{{parent_id}}"{{/if}} {{#if relation_field}},"data-io_relation": "{{relation_field}}"{{/if}}{{#if relation_field_from}},"data-io_relation_from": "{{relation_field_from}}"{{/if}} }'
-		>
-			<?php _e('Add Entry', 'cf-io') ; ?>
-		</button>
-		<input type="hidden" name="params[parent]" value="{{parent_id}}">
-		{{#if relation_field}}
-		<input type="hidden" name="params[relation_field]" value="{{relation_field}}">
-		{{/if}}			
-	{{/if}}
+		<?php if( is_admin() ){ ?>
+		{{#if parent_id}}
+		<?php } ?>
+			<button type="button" class="button cfajax-trigger"
+				style="margin: 1px 12px 0px 0px;"
+				data-request="<?php echo site_url( "/cf-api/" ); ?>{{form}}/" 
+				data-load-element="#cf-io-save-indicator"
+				data-modal="newentry-{{form}}"
+				data-modal-title="<?php echo esc_attr( __('Add Entry', 'cf-io') ) ; ?>"
+				data-method="get"
+				data-modal-width="{{width}}"
+				data-modal-height="auto"
+				data-modal-element="div"
+				data-callback="calders_forms_init_conditions"		
+				data-io_parent="{{parent_id}}"
+				data-io_modal="{{id}}"
+				data-modal-buttons='Save Entry|{ "data-for" : "form.{{form}}" {{#if parent_id}},"data-io_parent" : "{{parent_id}}"{{/if}} {{#if relation_field}},"data-io_relation": "{{relation_field}}"{{/if}}{{#if relation_field_from}},"data-io_relation_from": "{{relation_field_from}}"{{/if}} }'
+			>
+				<?php _e('Add Entry', 'cf-io') ; ?>
+			</button>
+			<input type="hidden" name="params[parent]" value="{{parent_id}}">
+			{{#if relation_field}}
+			<input type="hidden" name="params[relation_field]" value="{{relation_field}}">
+			{{/if}}			
+		<?php if( is_admin() ){ ?>
+		{{/if}}
+		<?php } ?>
 	<?php } ?>
-	<span style="" class="toggle_option_preview">
-		<label style="margin-top: 1px; margin-right: -7px; border-radius: 2px 0px 0px 2px;" class="add-new-h2 status_toggles status_toggles-{{id}} {{#is data/params/status value="active"}}active{{/is}}" type="button" >Active <input style="display:none;" type="radio" value="active" name="params[status]" {{#is data/params/status value="active"}}checked="checked"{{/is}}> <span class="current-status-count">{{data/status_totals/active/total}}</span></label>
-		<label style="margin-top: 1px; margin-right: 10px; border-radius: 0px 2px 2px 0;" class="add-new-h2 status_toggles status_toggles-{{id}} {{#is data/params/status value="trash"}}active{{/is}}" type="button" >Trash  <input style="display:none;" type="radio" value="trash" name="params[status]" {{#is data/params/status value="trash"}}checked="checked"{{/is}}> <span class="current-status-count">{{data/status_totals/trash/total}}</span></label>
-	</span>
+
 
 	<span>
 		Show <input type="number" class="screen-per-page" name="params[limit]" value="{{#if data/params/limit}}{{data/params/limit}}{{else}}20{{/if}}" id="cf-entries-list-items"> &nbsp;
@@ -70,12 +78,13 @@
 
 		</select>
 		<?php } ?>
+		{{#unless params/filters}}
 		<button class="button cf-bulk-action wp-baldrick io-entry-loader io-entry-loader-{{form}}" type="button"
 			
 			data-page="1"
 			data-load-element="#cf-io-save-indicator"
 			data-status="active"
-			data-form="{{form}}"
+			data-io="{{id}}"
 			data-target="#entry-trigger-{{id}}"
 			data-action="io_browse_entries"
 			data-active-class="disabled"
@@ -84,43 +93,49 @@
 			data-autoload="true"
 			{{/unless}}
 		>Apply</button>
-
+		{{/unless}}
 	</span>
 	<span style="margin-left: 45px;"><input placeholder="<?php echo esc_attr( __('Search', 'cf-io' ) ); ?>" type="search" name="params[key_word]" value="{{data/params/key_word}}"></span>
 	
-	{{#if data/entries}}
-	<div class="tablenav caldera-table-nav" style="display:inline;">
-
-		<div class="tablenav-pages">
-			<span class="displaying-num">{{data/total}} {{#is data/total value="1"}}item{{else}}items{{/is}}</span>
-			<span class="pagination-links" style="display: inline;">
-				<a class="first-page pagination" data-page="1" title="Go to the first page" href="#first">«</a>
-				<a class="prev-page pagination" data-page="prev" title="Go to the previous page" href="#prev">‹</a>
-				<span class="paging-input"><input type="number" class="current-page wp-baldrick" data-for="#io-entry-loader" data-event="change" title="Current page" name="params[page]" style="width:60px;" value="{{#if data/params/page}}{{data/params/page}}{{else}}1{{/if}}"> of <span class="total-pages">{{data/pages}}</span></span>
-				<a class="next-page pagination" data-page="next" title="Go to the next page" href="#next">›</a>
-				<a class="last-page pagination" data-page="{{data/pages}}" title="Go to the last page" href="#last">»</a>
-			</span>
-		</div>
-	</div>
-	{{/if}}
+</div>
+<div class="filter-wrapper">
+	{{#each params/filters}}
+		{{> filter_query_<?php echo $cf_io['id']; ?>}}
+	{{/each}}	
+	{{#if params/filters}}
+		<label class="button filter-add-and wp-baldrick" type="button" {{#if parent_id}}data-target="{{id}}"{{/if}} data-add-node="params.filters" data-node-default='{"type":"and"}'>And</label>
+		<button class="button filter-add-and cf-bulk-action wp-baldrick io-entry-loader io-entry-loader-{{form}}" type="button"
+			style="margin: 3px 3px 10px 12px;"
+			data-page="1"
+			data-load-element="#cf-io-save-indicator"
+			data-status="active"
+			data-io="{{id}}"
+			data-target="#entry-trigger-{{id}}"
+			data-action="io_browse_entries"
+			data-active-class="disabled"
+			data-before="cfio_get_filters_object"
+			{{#unless data}}
+			data-autoload="true"
+			{{/unless}}
+		>Apply</button>		
+	{{/if}}	
 </div>
 
-<hr>
 <input type="hidden" name="params[sort]" value="{{#if data/params/sort}}{{data/params/sort}}{{else}}datestamp{{/if}}">
 <input type="hidden" name="params[sort_order]" value="desc">
-<table class="wp-list-table widefat fixed striped io-table-viewer">
+<table class="widefat fixed striped io-table-viewer" id="list-table-{{id}}">
 	<thead>
 		<tr>
 			<?php if( true === $can_edit ){ ?>
-			<td class="manage-column column-cb check-column" id="cb">
-				<label for="cb-select-all-1" class="screen-reader-text">Select All</label>
+			<th data-hide="phone,tablet" class="column-cb check-column" style="padding:11px 0 0 3px;">
+				<label for="cb-select-all-1" class="screen-reader-text">Select</label>
 				<input type="checkbox" class="io-bulkcheck">
-			</td>		
+			</th>		
 			<?php } ?>
 			{{#each fields}}
 				{{#unless hide}}
-
-				<th class="manage-column {{#if sort}}{{#is ../data/params/sort value=id}}sorted {{../data/params/sort_order}}{{else}}sortable desc{{/is}}{{/if}}" id="{{id}}" scope="col">
+				
+				<th {{#is @root/toggle value=id}}data-toggle="true"{{else}}data-hide="{{#if phone}}phone{{/if}},{{#if tablet}}tablet{{/if}}"{{/is}} class="{{#if sort}}{{#is ../data/params/sort value=id}}sorted {{../data/params/sort_order}}{{else}}sortable desc{{/is}}{{/if}}" id="{{id}}" scope="col">
 					<label style="display:inline-flex;{{#unless sort}}cursor:default;{{/unless}}">
 						<span>
 						{{name}}
@@ -137,7 +152,7 @@
 				</th>
 				{{/unless}}
 			{{/each}}
-			<th></th>
+			<th data-hide="phone,tablet"></th>
 		</tr>
 	</thead>
 	<tbody id="the-list">
@@ -145,20 +160,20 @@
 			{{#each data/entries}}
 			<tr id="entry_row_{{id}}">
 				<?php if( true === $can_edit ){ ?>
-				<th class="check-column" scope="row">
+				<td scope="row">
 					<input type="checkbox" value="{{id}}" name="params[entry][]" class="io-entrycheck" id="io-select-{{id}}">
-				</th>	
+				</td>	
 				<?php } ?>
 				{{#each ../fields}}
 					{{#unless hide}}
 
-					<td class="manage-column column-title column-primary" id="{{id}}" scope="col">
+					<td id="{{id}}" scope="col">
 					{{#find .. id}} {{{this}}} {{/find}}
-					</th>
+					</td>
 
 					{{/unless}}
 				{{/each}}
-
+				<?php if( is_user_logged_in() ){ ?>
 				<td style="text-align: right; white-space: nowrap;">
 				<?php if( true === $can_edit ){ ?>
 					<button 
@@ -200,7 +215,6 @@
 					{{/is}}
 					{{/if}}
 				<?php } ?>
-
 					<button type="button" class="button button-small wp-baldrick"
 						data-action="get_entry"
 						data-io="{{../id}}"
@@ -215,9 +229,9 @@
 						data-template="#io-viewer-template"
 						data-static="true"
 						sdata-modal-buttons='Save Changes|{ "data-for" : "form.{{../form}}" }'
-					>View</button>					
-
+					>View</button>
 				</td>
+				<?php } ?>
 			</tr>
 			{{/each}}
 		{{else}}
@@ -236,6 +250,22 @@
 
 	{{/unless}}
 {{/unless}}
+
+{{#if data/entries}}
+<div class="tablenav caldera-table-nav" style="display:inline;">
+
+	<div class="tablenav-pages">
+		<span class="displaying-num">{{data/total}} {{#is data/total value="1"}}item{{else}}items{{/is}}</span>
+		<span class="pagination-links" style="display: inline;">
+			<a class="first-page pagination" data-page="1" title="Go to the first page" href="#first">«</a>
+			<a class="prev-page pagination" data-page="prev" title="Go to the previous page" href="#prev">‹</a>
+			<span class="paging-input"><input type="number" class="current-page wp-baldrick" data-for="#io-entry-loader" data-event="change" title="Current page" name="params[page]" style="width:60px;" value="{{#if data/params/page}}{{data/params/page}}{{else}}1{{/if}}"> of <span class="total-pages">{{data/pages}}</span></span>
+			<a class="next-page pagination" data-page="next" title="Go to the next page" href="#next">›</a>
+			<a class="last-page pagination" data-page="{{data/pages}}" title="Go to the last page" href="#last">»</a>
+		</span>
+	</div>
+</div>
+{{/if}}
 <div>
 
 {{#script}}
@@ -268,5 +298,6 @@ jQuery( function( $ ){
 			});
 		}
 	});
+	$('#list-table-{{id}}').footable();	
 });
 {{/script}}

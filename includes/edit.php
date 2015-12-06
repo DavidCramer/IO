@@ -27,9 +27,16 @@ $base_fields = array(
 		'ID' => 'user_id',
 		'label' => 'Created By',
 	),	
+	'status' => array(
+		'ID' => 'status',
+		'label' => 'Status',
+	),
 );
 foreach( $forms as $form_id=>$form ){
 	$pre = Caldera_Forms::get_form( $form_id );
+	if( empty( $pre['fields'] ) ){
+		$pre['fields'] = array();
+	}
 	if( !empty( $pre ) ){
 		$cf_io['forms'][ $form_id ] = array(
 			'id' => $form_id,
@@ -64,4 +71,11 @@ wp_enqueue_script( 'cf-init' );
 		include CFIO_PATH . 'includes/templates/main-ui.php';
 	?>	
 </script>
-
+<script type="text/html" data-handlebars-partial="filter_query_<?php echo $cf_io['id']; ?>">
+	<?php
+		$cf_io_config = $cf_io;
+		$cf_io_id = $cf_io['id'];
+		// pull in the filters partial
+		include CFIO_PATH . 'includes/templates/partial-filters.php';
+	?>
+</script>

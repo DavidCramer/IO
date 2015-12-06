@@ -40,46 +40,14 @@
 		if( empty( $cf_io['icon'] ) ){
 			$cf_io['icon'] = 'dashicons-admin-generic';
 		}
-?>
+		if( !empty( $cf_io['relation'] ) ){
+			continue;
+		}
+	echo '<div class="cf-io-interface-wrapper">';
+	io_build_card( $cf_io );
+	echo '</div>';
 
-	<div class="cf-io-card-item" id="cf_io-<?php echo $cf_io[ 'id' ]; ?>">
-		<span class="dashicons <?php echo $cf_io['icon']; ?> cf-io-card-icon"></span>
-		<div class="cf-io-card-content">
-			<h4>
-				<?php echo $cf_io[ 'name' ]; ?>
-			</h4>
-			<div class="description">
-				<?php echo $cf_io[ 'slug' ]; ?>
-			</div>
-			<div class="description">&nbsp;</div>
-			<div class="cf-io-card-actions">
-				<div class="row-actions">
-					<span class="edit">
-						<a href="?page=cf_io&amp;download=<?php echo $cf_io[ 'id' ]; ?>&cf-io-export=<?php echo wp_create_nonce( 'cf-io' ); ?>" target="_blank"><?php _e('Export', 'cf-io'); ?></a> |
-					</span>
-					<span class="edit">
-						<a href="?page=cf_io&amp;edit=<?php echo $cf_io[ 'id' ]; ?>"><?php _e('Edit', 'cf-io'); ?></a> |
-					</span>
-					<span class="trash confirm">
-						<a href="?page=cf_io&amp;delete=<?php echo $cf_io[ 'id' ]; ?>" data-block="<?php echo $cf_io[ 'id' ]; ?>" class="submitdelete">
-							<?php _e('Delete', 'cf-io'); ?>
-						</a>
-					</span>
-				</div>
-				<div class="row-actions" style="display:none;">
-					<span class="trash">
-						<a class="wp-baldrick" style="cursor:pointer;" data-action="cfio_delete_cf_io" data-callback="cfio_remove_deleted" data-block="<?php echo $cf_io['id']; ?>" class="submitdelete"><?php _e('Confirm Delete', 'cf-io'); ?></a> | </span>
-					<span class="edit confirm">
-						<a href="?page=cf_io&amp;edit=<?php echo $cf_io['id']; ?>">
-							<?php _e('Cancel', 'cf-io'); ?>
-						</a>
-					</span>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<?php } ?>
+	} ?>
 
 </div>
 <div class="clear"></div>
@@ -111,6 +79,18 @@
 		cf_io.data('name', name.val() ).data('slug', slug.val() );
 
 	}
+
+	jQuery('.page-bind').change( function(){
+		var select = jQuery( this ),
+			data = {
+				action 	: 'cfio_bind_io',
+				id		: select.parent().data('id'),
+				page	: select.val()
+			};
+		jQuery.post( ajaxurl, data, function(res){
+			console.log( res );
+		});
+	});
 
 	function bds_redirect_to_cf_io(obj){
 		

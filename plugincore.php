@@ -29,8 +29,6 @@ define('CFIO_CORE',  __FILE__ );
 define('CFIO_URL',  plugin_dir_url( __FILE__ ) );
 define('CFIO_VER',  '1.0.0-b1' );
 
-
-
 // Load instance
 add_action( 'plugins_loaded', 'cfio_bootstrap' );
 function cfio_bootstrap(){

@@ -73,7 +73,7 @@ class core {
 
 		// browser
 		add_action( 'wp_ajax_io_browse_entries', array( $this, 'browse_entries' ) );
-		//add_action( 'wp_ajax_nopriv_io_browse_entries', array( $this, 'browse_entries' ) );
+		add_action( 'wp_ajax_nopriv_io_browse_entries', array( $this, 'browse_entries' ) );
 
 		add_action( 'caldera_forms_submit_complete', array( $this, 'connect_entry_reference' ), 10, 1);
 
@@ -200,9 +200,77 @@ class core {
 	 *
 	 * @return mixed
 	 */
-	public function associate_id($config, $form){
+	private static function filter_compare( $filter ){
+		global $wpdb;
 
-		//return
+		switch ( $filter['compare'] ) {
+			case "is":
+				$return = $wpdb->prepare( " = %s ", $filter['value'] );
+				break;
+			case "isnot":
+				$return = $wpdb->prepare( " != %s ", $filter['value'] );
+				break;
+			case "isin":
+				$list = explode(',', $filter['value']);
+				$list = array_filter( $list, 'trim' );
+				$qlist = array();
+				foreach( $list as $item ){
+					$qlist[] = $wpdb->prepare( "%s", $item );
+				}
+				$return = " IN (" . implode( ",", $qlist ) .")";
+				break;
+			case "isnotin":
+				$list = explode(',', $filter['value']);
+				$list = array_filter( $list, 'trim' );
+				$qlist = array();
+				foreach( $list as $item ){
+					$qlist[] = $wpdb->prepare( "%s", $item );
+				}
+				$return = " NOT IN (" . implode( ",", $qlist ) .")";
+				break;
+			case "greater":
+				$return = $wpdb->prepare( " > %s ", $filter['value'] );
+				break;
+			case "greatereq":
+				$return = $wpdb->prepare( " >= %s ", $filter['value'] );
+				break;
+			case "smaller":
+				$return = $wpdb->prepare( " < %s ", $filter['value'] );
+				break;
+			case "smallereq":
+				$return = $wpdb->prepare( " <= %s ", $filter['value'] );
+				break;
+			case "startswith":
+				$return = $wpdb->prepare( " LIKE %s ", $filter['value'] . '%' );
+				break;
+			case "endswith":
+				$return = $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] );
+				break;
+			case "contains":
+				$return = $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] . '%' );
+				break;
+		}
+
+		// field or column
+		switch ( $filter['field'] ) {
+			case 'id':
+				$return = "`pri`.`id`" . $return;
+				break;
+			case 'user_id':
+				$return = "`pri`.`user_id`" . $return;
+				break;
+			case 'datestamp':
+				$return = "`pri`.`datestamp`" . $return;
+				break;
+			case 'status':
+				$return = "`pri`.`status`" . $return;
+				break;
+			default:
+				$return = "`" . $filter['_id'] . "`.`value`" . $return;
+				break;
+		}
+
+		return $return;
 	
 	}
 
@@ -215,81 +283,75 @@ class core {
 	public function browse_entries() {
 		global $wpdb;
 		
+		$data = stripslashes_deep( $_POST );
+		$io = options::get_single( $data['io'] ); 
 		//wp_send_json_success( $_POST );
-		$form = \Caldera_Forms::get_form( $_POST['form'] );
+		$form = \Caldera_Forms::get_form( $io['form'] );
 		$field_select = array();
 		foreach( $form['fields'] as $field => $field_conf ){
 			$field_select[] = "MAX(CASE WHEN `field`.`field_id` = '" . $field . "' THEN `field`.`value` ELSE NULL END) `" . $field . "`";
 		}
-		$default_params = array(
+		$params = array(
 			'status'	=>	'active',
 			'limit'		=>	10,
 			'page'		=>	1,
 			'sort'		=>	'id',
 			'sort_order' => 'desc',
 			'relation_field' => '_io_parent'
-
 		);
+		if( !empty( $io['params']['filters'] ) ){
+			$params['filters'] = $io['params']['filters'];
+		}
 
-		// get params
-		if( !empty( $_POST['params'] ) ){
-			$is_json = json_decode( stripslashes_deep( $_POST['params'] ), ARRAY_A );
-			if( is_array( $is_json ) && !empty( $is_json ) ){
-				$params = array_merge( $default_params, $is_json );
+		if( !empty( $data['params'] ) ){
+			$is_json = json_decode( $data['params'], ARRAY_A );
+			if( !empty( $is_json ) ){
+				$params = array_merge( $params, $is_json );
 			}
 		}
-		//do bulk actions
-		if( !empty( $params['action'] ) ){
-			switch ( $params['action'] ) {
-				case 'trash':
-					if( !empty( $params['entry'] ) ){
-						$result = $wpdb->query( $wpdb->prepare( "UPDATE `" . $wpdb->prefix . "cf_form_entries` SET `status` = %s WHERE `id` IN (".implode(',', (array) $params['entry'] ).");", 'trash' ) );
-					}
-					break;
-				case 'active':
-					if( !empty( $params['entry'] ) ){
-						$result = $wpdb->query( $wpdb->prepare( "UPDATE `" . $wpdb->prefix . "cf_form_entries` SET `status` = %s WHERE `id` IN (".implode(',', (array) $params['entry'] ).");", 'active' ) );
-					}
-					break;
-				case 'delete':
-					if( !empty( $params['entry'] ) ){
-						$result = $wpdb->query( "DELETE FROM `" . $wpdb->prefix . "cf_form_entries` WHERE `id` IN (".implode(',', (array) $params['entry'] ).");" );
-						$result = $wpdb->query( "DELETE FROM `" . $wpdb->prefix . "cf_form_entry_values` WHERE `entry_id` IN (".implode(',', (array) $params['entry'] ).");" );
-						$result = $wpdb->query( "DELETE FROM `" . $wpdb->prefix . "cf_form_entry_meta` WHERE `entry_id` IN (".implode(',', (array) $params['entry'] ).");" );
-					}
-					break;
-				default:
-					# code...
-					break;
-			}
-		}
+
 		// parent lock
 		$parent_filter = null;
 		$parent_join = null;
-		if( !empty( $params['parent'] ) ){
-			$parent_filter = "AND
-			`field`.`field_id` = '" . $params['relation_field'] . "'
-			AND
-			`field`.`value` = '" . $params['parent'] . "'";
-			$parent_join .= "RIGHT JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `field` ON ( `field`.`entry_id` = `pri`.`id` )";
-		}
 		$search = null;
-		if( !empty( $params['key_word'] ) ){
-			$search = "AND\r\n (";
-			$words = explode(' ', $params['key_word'] );
-			$keys = array();
-			foreach( $words as $word ){
-				if( empty( $word ) ){ continue; }
-				$keys[] = $wpdb->prepare( "`search`.`value` LIKE %s ", '%' . trim( $word ) . '%' );
+		if( !empty( $params['filters'] ) ){
+			$filter_joins = array();
+
+			foreach( $params['filters'] as $filter ){
+				
+				if( empty( $filter['field'] ) || empty( $filter['value'] ) || strlen( $filter['value'] ) < 1 ){
+					continue;
+				}
+
+				// is it internal field?							
+
+				$search .= "AND\r\n (";
+				$keys = array();
+				if( !empty( $form['fields'][ $filter['field'] ] ) ){
+					$filter_joins[] = "RIGHT JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `" . $filter['_id'] . "` ON ( `" . $filter['_id'] . "`.`entry_id` = `pri`.`id` && `" . $filter['_id'] . "`.`field_id` = '" . $filter['field'] . "' )";
+				}
+				$keys[] = self::filter_compare( $filter );
+				if( !empty( $filter['or'] ) ){
+					foreach( $filter['or'] as $or_filter ){
+						// field or meta?
+						if( !empty( $form['fields'][ $or_filter['field'] ] ) ){
+							// field
+							// check if theres an option field as not to include the mixdown
+							$filter_joins[] = "RIGHT JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `" . $or_filter['_id'] . "` ON ( `" . $or_filter['_id'] . "`.`entry_id` = `pri`.`id` && `" . $or_filter['_id'] . "`.`field_id` = '" . $or_filter['field'] . "' )";
+							$keys[] = self::filter_compare( $or_filter );
+						}
+					}
+				}
+				$search .= implode(' OR ', $keys ) . ')';
+				
 			}
-			$search .= implode(' OR ', $keys ) . ')';
-			$parent_join .= "RIGHT JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `search` ON ( `search`.`entry_id` = `pri`.`id` )";
+			$parent_join .= implode( "\r", $filter_joins );
+			
 		}
 
 		// counter
 		$query = " SELECT
 		COUNT( `pri`.`id` ) AS `total`,
-		`pri`.`status` as `status`,
 		GROUP_CONCAT( `pri`.`id` ) AS `list`
 
 		FROM `" . $wpdb->prefix . "cf_form_entries` AS `pri`
@@ -299,67 +361,74 @@ class core {
 		`pri`.`form_id` = '" . $form['ID'] . "'
 		" . $parent_filter . "
 		" . $search . "
-		GROUP BY `pri`.`status`
 		";
 
-		$total_res = $wpdb->get_results( $query );
-		$totals = array();
-		foreach( $total_res as $total_status ){
-			$totals[ $total_status->status ] = $total_status;
-		}
+		$totals = $wpdb->get_row( $query );
 
 		$pages = 0;
 		$return = array();
-		if( !empty( $totals[ $params['status'] ]->total ) ){
-			$pages = ceil( $totals[ $params['status'] ]->total / $params['limit'] );
+		// sort thing
+		$sort = array();
+		if( !empty( $totals->total ) ){
+			$pages = ceil( $totals->total / $params['limit'] );
 			if( $params['page'] > $pages ){
 				$params['page'] = $pages;
 			}
 			$offset = ($params['page'] - 1) * $params['limit'];
-			$limit = $offset . ',' . $params['limit'];
+			
+			$list = explode(',', $totals->list );
+			$items = 0;
 
+			
+			foreach( $list as $entry_instance=>$entry_id ){
+				$entry =\Caldera_Forms::get_entry( $entry_id, $form );
 
-			$query = "	SELECT
-			`pri`.*,
-			" . implode( ",\r\n\t", $field_select ) . "
+				$return[ 'res' . $entry_id ] = array(
+					'id'		=>	$entry_id,
+					'form_id' 	=>	$form['ID'],
+					'user_id'	=> 	$entry['user']['name'],
+					'datestamp'	=>	$entry['date'],
+					'status'	=>	$entry['status'],
+				);
 
-			FROM `" . $wpdb->prefix . "cf_form_entries` AS `pri`
-			LEFT JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `field` ON ( `field`.`entry_id` = `pri`.`id` )
-			WHERE
-			`pri`.`form_id` = '" . $form['ID'] . "'
-			AND
-			`pri`.`status` = '" . $params['status'] . "'
-			AND 
-			`pri`.`id` IN ( " . $totals[ $params['status'] ]->list . ") 
-
-			GROUP BY `pri`.`id`
-			ORDER BY " . $params['sort'] . " " . $params['sort_order'] . "
-			LIMIT 
-			" . $limit . "		
-			";
-
-			$results = $wpdb->get_results( $query, ARRAY_A );
-
-			\Caldera_Forms::get_field_types();
-			foreach ($results as $result) {
-				//$form
-				$return[ 'res' . $result['id'] ] = $result;
 				foreach( $form['fields'] as $field_id=>$field ){
-					if( isset( $return[ 'res' . $result['id'] ][ $field_id ] ) ){
-						$return[ 'res' . $result['id'] ][ $field_id ] = apply_filters( 'caldera_forms_view_field_' . $field['type'], $return[ 'res' . $result['id'] ][ $field_id ], $field, $form );
+					if( !empty( $entry['data'][ $field_id ] ) ){
+						$return[ 'res' . $entry_id ][ $field_id ] = $entry['data'][ $field_id ]['view'];
+						$sort[ 'res' . $entry_id ] = $entry['data'][ $field_id ]['value'];
+					}else{
+						$return[ 'res' . $entry_id ][ $field_id ] = null;
+						$sort[ 'res' . $entry_id ] = null;
 					}
 				}
+				
 			}
-		}
 
+			if( $params['sort_order'] == 'asc' ){
+				array_multisort($sort, SORT_ASC, $return);
+			}else{
+				array_multisort($sort, SORT_DESC, $return);
+			}
+
+		}
+		
 		$out = array(
-			'total' => ( !empty( $totals[ $params['status'] ]->total ) ? $totals[ $params['status'] ]->total : 0 ),
+			//'fields' => $data['fields'],
+			'total' => ( !empty( $totals->total ) ? $totals->total : 0 ),
 			'status_totals' => $totals,
 			'pages' => $pages,
 			'params' => $params,
 			'entries' => $return,
 			'query' => $query
 		);
+		if( !empty( $_POST['process'] ) && $_POST['process'] == 'export' ){
+			$transient_id = uniqid('cf_report');
+			$trans = array(
+				'list' => $totals->list,
+				'form' => $form['ID']
+			);
+			set_transient( $transient_id, $trans, 120 );
+			$out['export_key'] = $transient_id;
+		}
 
 		wp_send_json( $out );
 
@@ -395,6 +464,30 @@ class core {
 	}
 
 	/**
+	 * fetch io_id bound to page;
+	 *
+	 * @since 0.0.1
+	 *
+	 * @return    null
+	 */
+	public function get_bound_io() {
+		global $post;
+		if( $post->post_type !== 'page'){ return; }
+
+		$pagebinds = \calderawp\cfio\options::get_single( 'io_page_binds' );
+		if( !empty( $pagebinds['pages'] ) ){
+			foreach ( $pagebinds['pages'] as $io_id => $page_id) {
+				if( $post->ID == $page_id ){
+
+					return $io_id;
+
+				}
+			}
+		}		
+		return false;
+	}
+
+	/**
 	 * Register and enqueue front-specific style sheet.
 	 *
 	 * @since 0.0.1
@@ -402,10 +495,68 @@ class core {
 	 * @return    null
 	 */
 	public function enqueue_front_stylescripts() {
-		
-		
+
+		$io_id = $this->get_bound_io();
+		if( false === $io_id ){return;}
+
+		// yup -- do it!
+		$registry = \calderawp\cfio\options::get_registry();
+		if( !empty( $registry[ $io_id ]['form'] ) ){
+			wp_deregister_script( 'cf-dynamic' );
+			add_filter( 'caldera_forms_script_urls', array( $this, 'front_scripts' ) );
+			add_filter( 'caldera_forms_style_urls', array( $this, 'front_styles' ) );
+			\Caldera_Forms::cf_init_system();
+			add_filter( 'the_content', function( $content ){
+				ob_start();
+				$form_base = $this->get_bound_io();
+				include CFIO_PATH . 'includes/page.php';
+				$content .= ob_get_clean();
+
+				//wp_enqueue_script( 'io-base', CFIO_URL . 'assets/js/scripts.js', array( 'cf-baldrick' ) , false );
+				wp_localize_script( 'cf-dynamic', 'ajaxurl', admin_url( 'admin-ajax.php' ) );
+				
+				wp_enqueue_script( 'cf-dynamic' );
+				return $content;
+			});			
+
+		}		
 
 	}
+
+
+	/**
+	 * swap out front front_scripts
+	 *
+	 * @since 0.0.1
+	 *
+	 * @return    null
+	 */
+	public function front_scripts( $scripts ) {
+		
+
+			//unset( $scripts['ajax'] );
+			unset( $scripts['modals'] );
+			$scripts['baldrick'] = CFIO_URL . 'assets/js/wp-baldrick.js';
+			$scripts['io-base'] = CFIO_URL . 'assets/js/scripts.js';
+			$scripts = array_merge( array( 'handlebars' => CFIO_URL . 'assets/js/handlebars.js' ), $scripts );
+
+		return $scripts;
+	}
+
+
+	/**
+	 * swap out front styles
+	 *
+	 * @since 0.0.1
+	 *
+	 * @return    null
+	 */
+	public function front_styles( $styles ) {
+
+		$styles['modals'] = CFIO_URL . 'assets/css/modals-front.css';
+		wp_enqueue_style( 'cf_io-core-style', CFIO_URL . 'assets/css/styles.css' );
+		return $styles;
+	}	
 	
 	/**
 	 * Register and enqueue admin-specific style sheet.
@@ -429,25 +580,30 @@ class core {
 
 			wp_enqueue_style( 'cf-field-styles', CFCORE_URL . 'assets/css/fields.min.css', array() );
 
-			wp_enqueue_style( 'dashicons-picker', CFIO_URL . '/assets/css/dashicons-picker.css', array( 'dashicons' ) );
-			wp_enqueue_style( 'cf_io-core-style', CFIO_URL . '/assets/css/styles.css' );
-			wp_enqueue_style( 'cf_io-baldrick-modals', CFIO_URL . '/assets/css/modals.css' );
-			wp_enqueue_script( 'cf_io-handlebars', CFIO_URL . '/assets/js/handlebars.js' );
-			wp_enqueue_script( 'cf_io-wp-baldrick', CFIO_URL . '/assets/js/wp-baldrick.js', array( 'jquery' ) , false, true );
+			wp_enqueue_style( 'dashicons-picker', CFIO_URL . 'assets/css/dashicons-picker.css', array( 'dashicons' ) );
+			wp_enqueue_style( 'cf_io-core-style', CFIO_URL . 'assets/css/styles.css' );
+			wp_enqueue_style( 'cf_io-baldrick-modals', CFIO_URL . 'assets/css/modals.css' );
+			wp_enqueue_script( 'cf_io-handlebars', CFIO_URL . 'assets/js/handlebars.js' );
+			wp_enqueue_script( 'cf_io-wp-baldrick', CFIO_URL . 'assets/js/wp-baldrick.js', array( 'jquery' ) , false, true );
 			wp_enqueue_script( 'jquery-ui-autocomplete' );
 			wp_enqueue_script( 'jquery-ui-sortable' );
-			wp_enqueue_style( 'cf_io-codemirror-style', CFIO_URL . '/assets/css/codemirror.css' );
-			wp_enqueue_script( 'cf_io-codemirror-script', CFIO_URL . '/assets/js/codemirror.js', array( 'jquery' ) , false );
-			wp_enqueue_script( 'dashicons-picker', CFIO_URL . '/assets/js/dashicons-picker.js', array( 'jquery' ) );
-			wp_enqueue_script( 'cf_io-core-script', CFIO_URL . '/assets/js/scripts.js', array( 'cf_io-wp-baldrick' ) , false );
+			wp_enqueue_style( 'cf_io-codemirror-style', CFIO_URL . 'assets/css/codemirror.css' );
+			wp_enqueue_script( 'cf_io-codemirror-script', CFIO_URL . 'assets/js/codemirror.js', array( 'jquery' ) , false );
+			wp_enqueue_script( 'dashicons-picker', CFIO_URL . 'assets/js/dashicons-picker.js', array( 'jquery' ) );
+			wp_enqueue_script( 'cf_io-core-script', CFIO_URL . 'assets/js/scripts.js', array( 'cf_io-wp-baldrick' ) , false );
 			wp_enqueue_style( 'wp-color-picker' );
 			wp_enqueue_script( 'wp-color-picker' );			
+
+			wp_enqueue_style( 'cf_io-footable-style', CFIO_URL . 'assets/css/footable.core.min.css' );
+			wp_enqueue_script( 'cf_io-footable-script', CFIO_URL . 'assets/js/footable.min.js', array( 'jquery' ) , false );
+
+
 			//CF
 			//wp_enqueue_style( 'cf-admin-styles', CFCORE_URL . 'assets/css/admin.css', array() );
 
-			//wp_enqueue_script( 'cf_io-select2', CFIO_URL . '/assets/js/select2.min.js', array( 'jquery' ) , false );
+			//wp_enqueue_script( 'cf_io-select2', CFIO_URL . 'assets/js/select2.min.js', array( 'jquery' ) , false );
 
-			//wp_enqueue_style( 'cf_io-select2', CFIO_URL . '/assets/css/select2.css' );
+			//wp_enqueue_style( 'cf_io-select2', CFIO_URL . 'assets/css/select2.css' );
 			$field_types = apply_filters( 'caldera_forms_get_field_types', array() );
 
 			foreach( $field_types as $field ){

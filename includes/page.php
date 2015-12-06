@@ -38,6 +38,9 @@ if( !empty( $cf_io['edit_roles'] ) ){
  	}
 }
 
+// clear out locked filters
+$cf_io['params']['filters'] = array();
+
 ?>
 <style type="text/css">
 	
@@ -109,10 +112,18 @@ if( false === $cf_io ){
 	);
 }
 $cf_io['_current_tab'] = '#cf-io-panel-form';
+
+if( is_admin() ){
 ?>
 <div class="wrap cf-io-calderamain-canvas" id="cf-io-main-canvas">
 	<span class="wp-baldrick spinner" style="float: none; display: block;" data-target="#cf-io-main-canvas" data-before="cfio_canvas_reset" data-callback="cfio_canvas_init" data-type="json" data-request="#cf-io-live-config" data-event="click" data-template="#main-ui-template" data-autoload="true"></span>
 </div>
+<?php }else{ ?>
+<div class="io-interface-wrap" id="cf-io-main-canvas">
+	<span class="wp-baldrick spinner" style="float: none; display: block;" data-target="#cf-io-main-canvas" data-before="cfio_canvas_reset" data-callback="cfio_canvas_init" data-type="json" data-request="#cf-io-live-config" data-event="click" data-template="#main-ui-template" data-autoload="true"></span>
+</div>
+<?php } ?>
+
 
 <div class="clear"></div>
 
@@ -147,6 +158,7 @@ $cf_io['_current_tab'] = '#cf-io-panel-form';
 			<input name="slug" value="{{slug}}" type="hidden">
 			<input name="fields" value="{{json fields}}" type="hidden">
 			<input name="form" value="{{form}}" type="hidden">
+			<input name="params" value="{{#if params}}{{json params}}{{/if}}" type="hidden" id="params-init-{{id}}">
 			{{#is relation_field_from value="_entry_id"}}
 				<input name="parent_id" value="{{../entry_id}}" type="hidden">
 			{{else}}
@@ -177,8 +189,9 @@ $cf_io['_current_tab'] = '#cf-io-panel-form';
 				id="entry-trigger-{{id}}"
 				data-autoload="true"
 			>
+			<div id="panel-interface-{{@key}}"></div>
 		</form>
-		<div id="panel-interface-{{@key}}"></div>
+		
 	</div>
 	{{/each}}
 
@@ -222,7 +235,13 @@ foreach( $cf_ios as $cf_io_id=>$cf_io_config ){
 jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-entry-loader-<?php echo $cf_io_config['form']; ?>').trigger('click');
 {{/script}}
 </script>
+<script type="text/html" data-handlebars-partial="list_template_<?php echo $cf_io_id; ?>">
+<?php
+	// pull in the table list
+	include CFIO_PATH . 'includes/templates/template-table-list.php';
 
+?>
+</script>
 <script type="text/html" id="io-list-template-<?php echo $cf_io_id; ?>">
 	<?php
 		$cf_io_config = \calderawp\cfio\options::get_single( $cf_io_id );
@@ -258,13 +277,17 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 		include CFIO_PATH . 'includes/templates/template-table-list.php';
 	?>
 </script>
-
+<script type="text/html" data-handlebars-partial="filter_query_<?php echo $cf_io_id; ?>">
+	<?php
+		// pull in the filters partial
+		include CFIO_PATH . 'includes/templates/partial-filters.php';
+	?>
+</script>
 <?php 
 
 }
 
  ?>
-
 <script type="text/javascript">
 	function cfio_start_importer(){
 		return {};
@@ -327,7 +350,7 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 	jQuery( function( $ ){
 		$(document).on( 'change', "[name^='params[']", function(){
 			var clicked = $( this );
-			if( clicked.is(':checkbox') || clicked.is('select') ){
+			if( clicked.hasClass('io-entrycheck') || clicked.is('select') ){
 				return;
 			}
 			clicked.addClass('disabled');

@@ -8,7 +8,6 @@ var cf_io_canvas = false,
 	cfio_get_default_setting,
 	cfio_code_editor,
 	cfio_handle_save,	
-	cfio_rebuild_magics,
 	cfio_init_magic_tags,
 	cfio_config_object = {},
 	cfio_get_filters_object,
@@ -210,7 +209,6 @@ jQuery( function($){
 		$('[data-auto-focus]').focus().select();
 
 		// rebuild tags
-		cfio_rebuild_magics();
 		jQuery(document).trigger('canvas_init');
 	}
 	
@@ -229,7 +227,8 @@ jQuery( function($){
 			node_string += '}';
 		}
 		var new_nodes = JSON.parse( node_string );
-		$.extend( true, cfio_config_object, new_nodes );
+		
+		return new_nodes;
 	};
 
 	cfio_get_default_setting = function(obj){
@@ -243,7 +242,8 @@ jQuery( function($){
 		// add simple node
 		if( trigger.data('addNode') ){
 			// new node? add one
-			cfio_add_node( trigger.data('addNode'), trigger.data('nodeDefault') );
+			var new_nodes = cfio_add_node( trigger.data('addNode'), trigger.data('nodeDefault') );
+			$.extend( true, cfio_config_object, new_nodes );
 		}
 		// remove simple node (all)
 		if( trigger.data('removeNode') ){
@@ -279,93 +279,26 @@ jQuery( function($){
 		jQuery('#cf-io-field-sync').trigger('refresh');	
 	};
 	// sutocomplete category
-	$.widget( "custom.catcomplete", $.ui.autocomplete, {
-		_create: function() {
-			this._super();
-			this.widget().menu( "option", "items", "> :not(.ui-autocomplete-category)" );
-		},
-		_renderMenu: function( ul, items ) {
-			var that = this,
-			currentCategory = "";
-			$.each( items, function( index, item ) {
-				var li;
-				if ( item.category != currentCategory ) {
-					ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
-					currentCategory = item.category;
-				}
-				li = that._renderItemData( ul, item );
-				if ( item.category ) {
-					li.attr( "aria-label", item.category + " : " + item.label );
-				}
-			});
-		}
-	});
-	cfio_rebuild_magics = function(){
-
-		function split( val ) {
-			return val.split( / \s*/ );
-		}
-		function extractLast( term ) {
-			return split( term ).pop();
-		}
-		$( ".magic-tag-enabled" ).bind( "keydown", function( event ) {
-			if ( event.keyCode === $.ui.keyCode.TAB && $( this ).catcomplete( "instance" ).menu.active ) {
-				event.preventDefault();
-			}
-		}).catcomplete({
-			minLength: 0,
-			source: function( request, response ) {
-				// delegate back to autocomplete, but extract the last term
-				cfio_magic_tags = [];
-				var category = '',
-					tags = $('.cf-io-magic-tags-definitions');
-
-				if( tags.length ){
-
-					for( var tag_set = 0; tag_set < tags.length; tag_set++ ){
-
-						var magic_tags;
-						
-						category = 'Magic Tags';
-
-						if( $( tags[ tag_set ] ).data('category') ){
-							category = $( tags[ tag_set ] ).data('category');
-						}
-						// set internal tags
-						try{
-							magic_tags = JSON.parse( tags[ tag_set ].value );
-						} catch (e) {
-							magic_tags = [ $(tags[ tag_set ]).data('tag') ];
-						}
-
-						var display_label;
-						for( f = 0; f < magic_tags.length; f++ ){
-							display_label = magic_tags[f].split( '*' );
-							if( display_label[1] ){
-								display_label = display_label[0] + '*';
-							}
-							cfio_magic_tags.push( { label: '{' + display_label + '}',value: '{' + magic_tags[f] + '}', category: category }  );
-						}
+	if( $.ui ){
+		$.widget( "custom.catcomplete", $.ui.autocomplete, {
+			_create: function() {
+				this._super();
+				this.widget().menu( "option", "items", "> :not(.ui-autocomplete-category)" );
+			},
+			_renderMenu: function( ul, items ) {
+				var that = this,
+				currentCategory = "";
+				$.each( items, function( index, item ) {
+					var li;
+					if ( item.category != currentCategory ) {
+						ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
+						currentCategory = item.category;
 					}
-
-				}
-				
-				response( $.ui.autocomplete.filter( cfio_magic_tags, extractLast( request.term ) ) );
-			},
-			focus: function() {
-				// prevent value inserted on focus
-				return false;
-			},
-			select: function( event, ui ) {
-				var terms = split( this.value );
-				// remove the current input
-				terms.pop();
-				// add the selected item
-				terms.push( ui.item.value );
-				// add placeholder to get the comma-and-space at the end
-				//terms.push( "" );
-				this.value = terms.join( " " );
-				return false;
+					li = that._renderItemData( ul, item );
+					if ( item.category ) {
+						li.attr( "aria-label", item.category + " : " + item.label );
+					}
+				});
 			}
 		});
 	}
@@ -572,7 +505,12 @@ jQuery( function($){
 		checks.prop('checked', checked.prop('checked'));
 
 	});
-	
+	// init partials
+	$('script[data-handlebars-partial]').each( function(){
+		var partial = $( this );
+		Handlebars.registerPartial( partial.data('handlebarsPartial'), partial.html() );
+	});
+
 	$('body').on('change', '.io-entrycheck', function(){
 
 		var checkall	= $('.io-bulkcheck'),
@@ -596,12 +534,23 @@ jQuery( function($){
 	$('.wp-baldrick').baldrick({
 		request     : ajaxurl,
 		method      : 'POST',
-		before		: function(el){
+		before		: function(el, ev){
 			
 			var tr = $(el);
 
 			if( tr.data('addNode') && !tr.data('request') ){
-				tr.data('request', 'cfio_get_default_setting');
+				if( tr.data('target') ){
+					ev.preventDefault();
+					var new_nodes = cfio_add_node( tr.data('addNode'), tr.data('nodeDefault') ),
+						old_nodes = $( '#params-init-' + tr.data('target') ).formJSON();
+
+					$.extend( true, old_nodes, new_nodes );
+					$( '#params-init-' + tr.data('target') ).val( JSON.stringify( old_nodes.params ) );
+					$('#entry-trigger-' + tr.data('target') ).trigger('change');
+					return false;
+				}else{
+					tr.data('request', 'cfio_get_default_setting');
+				}
 			}
 		}
 	});
@@ -702,7 +651,7 @@ function cfio_init_editor(el){
 	"use strict";
 
 	if( typeof CodeMirror === 'undefined' || cf_io_canvas === false ){
-		//return;
+		return;
 	}
 
 	var Pos         = CodeMirror.Pos;

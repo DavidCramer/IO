@@ -8,6 +8,14 @@
 ?>
 
 <div class="cf-io-fixed-center" style="width: auto; margin-right: 30px;">
+
+	<label style="margin: 1px 12px 0px 0px;" class="button wp-baldrick" type="button" {{#if parent_id}}data-target="{{id}}"{{/if}} data-add-node="params.filters" data-node-default='{"type":"and"}'>Add Filter</label>
+	<div class="filter-wrapper">
+		{{#each @root/params/filters}}
+			{{> filter_query_<?php echo $cf_io['id']; ?>}}
+		{{/each}}
+	</div>
+
 	<div class="postbox">
 		<h3 style="font-size: 14px;line-height: 1.4;margin: 0;padding: 8px 9pt; border-bottom: 1px solid #eee;" >
 			<span><?php _e( 'Ordering', 'cf-io' ); ?></span>
@@ -58,7 +66,7 @@
 	</div>
 	{{#each @root/fields}}
 		{{#unless hide}}
-			<input type="hidden" name="title[{{@key}}][id]" value="{{@key}}">			
+			<input type="hidden" name="title[{{@key}}][id]" value="{{@key}}">
 		{{/unless}}
 	{{/each}}		
 
@@ -71,7 +79,7 @@
 				</h3>
 				<div>
 					{{#each fields}}
-						<div>
+						<div style="clear:both;">
 							<div style="border-bottom: 1px solid rgb(239, 239, 239);">
 								<input type="hidden" name="fields[{{ID}}][id]" value="{{ID}}">
 								<input type="hidden" name="fields[{{ID}}][name]" value="{{label}}">
@@ -80,18 +88,25 @@
 								{{#if type}}
 								<input type="hidden" name="fields[{{ID}}][type]" value="{{type}}">
 								{{/if}}
-								<span style="padding: 11px;text-transform: capitalize;display: inline-block;">
+								<div style="padding: 11px;text-transform: capitalize;">
 									{{label}} <small style="color:{{#is @root/_open_field value=ID}}rgba(255,255,255,.7){{else}}#8f8f8f{{/is}};">{{type}} - {{ID}}</small>
-								</span>
-								{{#find @root/fields ID}}
-								<label class="dashicons dashicons-filter" style="float: right; margin: 7px;{{#unless filter}}opacity:0.4;{{/unless}};"><input type="checkbox" name="fields[{{@key}}][filter]" value="1" data-live-sync="true" style="display:none;" {{#if filter}}checked="checked"{{/if}}></label>
-								<label class="dashicons dashicons-visibility" style="float: right; margin: 7px;{{#if hide}}opacity:0.4;{{/if}};"><input type="checkbox" name="fields[{{@key}}][hide]" value="1" data-live-sync="true" style="display:none;" {{#if hide}}checked="checked"{{/if}}></label>
-								<label class="dashicons dashicons-sort" style="float: right; margin: 7px;{{#unless sort}}opacity:0.4;{{/unless}};"><input type="checkbox" name="fields[{{@key}}][sort]" value="1" data-live-sync="true" style="display:none;" {{#if sort}}checked="checked"{{/if}}></label>
-								{{#unless hide}}
-								<label class="dashicons dashicons-minus" style="float: right; margin: 7px;{{#unless in_title}}opacity:0.4;{{/unless}};"><input type="checkbox" name="fields[{{@key}}][in_title]" value="1" data-live-sync="true" style="display:none;" {{#if in_title}}checked="checked"{{/if}}></label>
-								{{/unless}}
-
-								{{/find}}
+								</div>
+								<div style="margin: -4px 0px 6px 10px;">
+									{{#find @root/fields ID}}								
+									<label class="dashicons dashicons-visibility" style="{{#if hide}}opacity:0.4;{{/if}};"><input type="checkbox" name="fields[{{@key}}][hide]" value="1" data-live-sync="true" style="display:none;" {{#if hide}}checked="checked"{{/if}}></label>
+									<label class="dashicons dashicons-sort" style="{{#unless sort}}opacity:0.4;{{/unless}};"><input type="checkbox" name="fields[{{@key}}][sort]" value="1" data-live-sync="true" style="display:none;" {{#if sort}}checked="checked"{{/if}}></label>
+									{{#unless hide}}
+									<label class="dashicons dashicons-minus" style="{{#unless in_title}}opacity:0.4;{{/unless}};"><input type="checkbox" name="fields[{{@key}}][in_title]" value="1" data-live-sync="true" style="display:none;" {{#if in_title}}checked="checked"{{/if}}></label>
+										
+										<label class="dashicons dashicons-menu" style="{{#is @root/toggle value=@key}}{{else}}opacity:0.4;{{/is}};"><input type="radio" name="toggle" value="{{@key}}" data-live-sync="true" style="display:none;" {{#is @root/toggle value=@key}}checked="checked"{{/is}}></label>
+										{{#is @root/toggle value=@key}}
+										{{else}}
+										<label class="dashicons dashicons-smartphone" style="{{#if phone}}opacity:0.4;{{/if}};"><input type="checkbox" name="fields[{{@key}}][phone]" value="1" data-live-sync="true" style="display:none;" {{#if phone}}checked="checked"{{/if}}></label>
+										<label class="dashicons dashicons-tablet" style="{{#if tablet}}opacity:0.4;{{/if}};"><input type="checkbox" name="fields[{{@key}}][tablet]" value="1" data-live-sync="true" style="display:none;" {{#if tablet}}checked="checked"{{/if}}></label>
+										{{/is}}
+									{{/unless}}
+									{{/find}}
+								</div>
 							</div>
 						</div>
 					{{/each}}
