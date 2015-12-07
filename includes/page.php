@@ -37,9 +37,28 @@ if( !empty( $cf_io['edit_roles'] ) ){
  		}
  	}
 }
-
+$can_view = false;
+if( !empty( $cf_io['view_roles'] ) ){
+ 	if( !empty( $cf_io['view_roles']['_all_roles'] ) ){
+ 		$can_view = true;
+ 	}else{
+ 		foreach( $cf_io['view_roles'] as $role => $enabled ){
+ 			if( current_user_can( $role ) ){
+ 				$can_view = true;
+ 				break;
+ 			}
+ 		}
+ 	}
+}
+if( empty( $can_capture ) && empty( $can_edit ) && empty( $can_view ) ){
+	$no_actions = true;
+}
 // clear out locked filters
 $cf_io['params']['filters'] = array();
+
+// clear out saved forms
+$cf_io['forms'] = array();
+$cf_io['forms'][ $cf_io['form'] ] = \Caldera_Forms::get_form( $cf_io['form'] );
 
 ?>
 <style type="text/css">
@@ -228,7 +247,7 @@ foreach( $cf_ios as $cf_io_id=>$cf_io_config ){
 	if( empty( $cf_io_config['form'] ) || in_array( $cf_io_config['form'], $done ) ){
 		continue;
 	}
-	$done[] = $cf_io_config['form'];
+	//$done[] = $cf_io_config['form'];
 ?>
 <script type="text/html" id="cfajax_<?php echo $cf_io_config['form']; ?>-tmpl">
 {{#script}}
@@ -245,6 +264,10 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 <script type="text/html" id="io-list-template-<?php echo $cf_io_id; ?>">
 	<?php
 		$cf_io_config = \calderawp\cfio\options::get_single( $cf_io_id );
+		// clear out saved forms
+		$cf_io_config['forms'] = array();
+		$cf_io_config['forms'][ $cf_io_config['form'] ] = \Caldera_Forms::get_form( $cf_io_config['form'] );
+
 		$can_capture = false;
 		if( !empty( $cf_io_config['capture_roles'] ) ){
 		 	if( !empty( $cf_io_config['capture_roles']['_all_roles'] ) ){
@@ -272,7 +295,22 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 		 		}
 		 	}
 		}
-
+		$can_view = false;
+		if( !empty( $cf_io_config['view_roles'] ) ){
+		 	if( !empty( $cf_io_config['view_roles']['_all_roles'] ) ){
+		 		$can_view = true;
+		 	}else{
+		 		foreach( $cf_io_config['view_roles'] as $role => $enabled ){
+		 			if( current_user_can( $role ) ){
+		 				$can_view = true;
+		 				break;
+		 			}
+		 		}
+		 	}
+		}
+		if( empty( $can_capture ) && empty( $can_edit ) && empty( $can_view ) ){
+			$no_actions = true;
+		}
 		// pull in the table list
 		include CFIO_PATH . 'includes/templates/template-table-list.php';
 	?>

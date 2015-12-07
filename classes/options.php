@@ -38,11 +38,12 @@ class options {
 	 *
 	 * @return array|void|bool Config array for new cf_io if it exists. Void if not. False if not allowed
 	 */
-	public static function create( $name, $slug ) {
+	public static function create( $name, $slug, $form ) {
 		$can = self::can();
 		if ( $can ) {
 			$name     = sanitize_text_field( $name );
 			$slug     = sanitize_title_with_dashes( $slug );
+			$form     = sanitize_text_field( $form );
 			$item_id  = self::create_unique_id();
 			$registry = self::get_registry();
 
@@ -51,6 +52,7 @@ class options {
 					'id'   => $item_id,
 					'name' => $name,
 					'slug' => $slug,
+					'form' => $form,
 				);
 
 				$registry[ $item_id ] = $new;

@@ -204,13 +204,52 @@ class core {
 		global $wpdb;
 
 		$return = null;
+
+		//
+		// field or column
+		switch ( $filter['field'] ) {
+			case 'id':
+				$return = "`pri`.`id` ";
+				break;
+			case 'user_id':
+				if( !empty( $filter['value'] ) ){
+					if( $filter['value'] == '_current_id' ){
+						$filter['value'] = get_current_user_id();
+					}
+					if( $filter['value'] == '_empty' ){
+						$filter['value'] = 0;
+					}
+				}
+				$return = "`pri`.`user_id` ";
+				break;
+			case 'datestamp':
+				$return = "`pri`.`datestamp` ";
+				break;
+			case 'status':
+				$return = "`pri`.`status` ";
+				break;
+			default:
+				$return = "`" . $filter['_id'] . "`.`value` ";
+				break;
+		}
+
+
 		if( !empty( $filter['compare'] ) ){
+
 			switch ( $filter['compare'] ) {
+				case "isnull":
+					$return .= "IS NULL";
+					break;
 				case "is":
-					$return = $wpdb->prepare( " = %s ", $filter['value'] );
+					if( strlen( $filter['value'] ) === 0 ){
+						$return .= "IS NULL";
+					}else{
+						$return .= $wpdb->prepare( " = %s ", $filter['value'] );
+					}
 					break;
 				case "isnot":
-					$return = $wpdb->prepare( " != %s ", $filter['value'] );
+				case "isnot":
+					$return .= $wpdb->prepare( " != %s ", $filter['value'] );
 					break;
 				case "isin":
 					$list = explode(',', $filter['value']);
@@ -219,7 +258,7 @@ class core {
 					foreach( $list as $item ){
 						$qlist[] = $wpdb->prepare( "%s", $item );
 					}
-					$return = " IN (" . implode( ",", $qlist ) .")";
+					$return .= " IN (" . implode( ",", $qlist ) .")";
 					break;
 				case "isnotin":
 					$list = explode(',', $filter['value']);
@@ -228,49 +267,30 @@ class core {
 					foreach( $list as $item ){
 						$qlist[] = $wpdb->prepare( "%s", $item );
 					}
-					$return = " NOT IN (" . implode( ",", $qlist ) .")";
+					$return .= " NOT IN (" . implode( ",", $qlist ) .")";
 					break;
 				case "greater":
-					$return = $wpdb->prepare( " > %s ", $filter['value'] );
+					$return .= $wpdb->prepare( " > %s ", $filter['value'] );
 					break;
 				case "greatereq":
-					$return = $wpdb->prepare( " >= %s ", $filter['value'] );
+					$return .= $wpdb->prepare( " >= %s ", $filter['value'] );
 					break;
 				case "smaller":
-					$return = $wpdb->prepare( " < %s ", $filter['value'] );
+					$return .= $wpdb->prepare( " < %s ", $filter['value'] );
 					break;
 				case "smallereq":
-					$return = $wpdb->prepare( " <= %s ", $filter['value'] );
+					$return .= $wpdb->prepare( " <= %s ", $filter['value'] );
 					break;
 				case "startswith":
-					$return = $wpdb->prepare( " LIKE %s ", $filter['value'] . '%' );
+					$return .= $wpdb->prepare( " LIKE %s ", $filter['value'] . '%' );
 					break;
 				case "endswith":
-					$return = $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] );
+					$return .= $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] );
 					break;
 				case "contains":
-					$return = $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] . '%' );
+					$return .= $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] . '%' );
 					break;
 			}
-		}
-
-		// field or column
-		switch ( $filter['field'] ) {
-			case 'id':
-				$return = "`pri`.`id`" . $return;
-				break;
-			case 'user_id':
-				$return = "`pri`.`user_id`" . $return;
-				break;
-			case 'datestamp':
-				$return = "`pri`.`datestamp`" . $return;
-				break;
-			case 'status':
-				$return = "`pri`.`status`" . $return;
-				break;
-			default:
-				$return = "`" . $filter['_id'] . "`.`value`" . $return;
-				break;
 		}
 
 		return $return;
@@ -300,17 +320,18 @@ class core {
 			'page'		=>	1,
 			'sort'		=>	'id',
 			'sort_order' => 'desc',
-			'relation_field' => '_io_parent'
+			'relation_field' => '_io_parent',
+			'filters' => array()
 		);
-		if( !empty( $io['params']['filters'] ) ){
-			$params['filters'] = $io['params']['filters'];
-		}
 
 		if( !empty( $data['params'] ) ){
 			$is_json = json_decode( $data['params'], ARRAY_A );
 			if( !empty( $is_json ) ){
 				$params = array_merge( $params, $is_json );
 			}
+		}
+		if( !empty( $io['params']['filters'] ) ){
+			$params['filters'] = array_merge( $io['params']['filters'], $params['filters'] );
 		}
 
 		// parent lock
@@ -332,25 +353,33 @@ class core {
 
 			foreach( $params['filters'] as $filter ){
 				
-				if( empty( $filter['field'] ) || empty( $filter['value'] ) || strlen( $filter['value'] ) < 1 ){
+				if( empty( $filter['field'] ) ){//|| empty( $filter['value'] ) || strlen( $filter['value'] ) < 1 ){
 					continue;
 				}
 
-				// is it internal field?							
-
+				// is it internal field?
 				$search .= "AND\r\n (";
 				$keys = array();
 				if( !empty( $form['fields'][ $filter['field'] ] ) ){
-					$filter_joins[] = "RIGHT JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `" . $filter['_id'] . "` ON ( `" . $filter['_id'] . "`.`entry_id` = `pri`.`id` && `" . $filter['_id'] . "`.`field_id` = '" . $filter['field'] . "' )";
+					$join_type = "RIGHT"; 
+					if( $filter['compare'] == 'isnull' ){
+						$join_type = "LEFT OUTER";
+					}
+					$filter_joins[] = $join_type . " JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `" . $filter['_id'] . "` ON ( `" . $filter['_id'] . "`.`entry_id` = `pri`.`id` && `" . $filter['_id'] . "`.`field_id` = '" . $filter['field'] . "' )";
 				}
 				$keys[] = self::filter_compare( $filter );
 				if( !empty( $filter['or'] ) ){
 					foreach( $filter['or'] as $or_filter ){
 						// field or meta?
 						if( !empty( $form['fields'][ $or_filter['field'] ] ) ){
+							$join_type = "RIGHT"; 
+							if( $or_filter['compare'] == 'isnull' ){
+								$join_type = "LEFT OUTER";
+							}
+
 							// field
 							// check if theres an option field as not to include the mixdown
-							$filter_joins[] = "RIGHT JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `" . $or_filter['_id'] . "` ON ( `" . $or_filter['_id'] . "`.`entry_id` = `pri`.`id` && `" . $or_filter['_id'] . "`.`field_id` = '" . $or_filter['field'] . "' )";
+							$filter_joins[] = $join_type . " JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `" . $or_filter['_id'] . "` ON ( `" . $or_filter['_id'] . "`.`entry_id` = `pri`.`id` && `" . $or_filter['_id'] . "`.`field_id` = '" . $or_filter['field'] . "' )";
 							$keys[] = self::filter_compare( $or_filter );
 						}
 					}
@@ -379,6 +408,7 @@ class core {
 		COUNT( `pri`.`id` ) as `total`
 		FROM `" . $wpdb->prefix . "cf_form_entries` AS `pri`
 		" . $parent_join . "
+		" . $filter_join . "
 		WHERE
 		`pri`.`form_id` = '" . $form['ID'] . "'
 		" . $parent_filter . "

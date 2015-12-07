@@ -1,19 +1,23 @@
 <style type="text/css">
 
+#preview_newentry_baldrickModal .baldrick-modal-title .modal-label,
 #newentry_baldrickModal .baldrick-modal-title .modal-label{
 	background-color: {{color}};
 }
+#preview_newentry_baldrickModal .cf-io-modal-title > h3 ,
 #newentry_baldrickModal .cf-io-modal-title > h3 {
 	background-color: {{color}};
 }
+#preview_newentry_baldrickModal.baldrick-modal-wrap .navtabs > li a ,
 #newentry_baldrickModal.baldrick-modal-wrap .navtabs > li a {
   color: {{color}};
 }
+#preview_newentry_baldrickModal.baldrick-modal-wrap .navtabs > li.selected > a ,
 #newentry_baldrickModal.baldrick-modal-wrap .navtabs > li.selected > a {
   background: none repeat scroll 0 0 {{color}};
 }
 </style>
-
+		<input type="hidden" name="form" value="{{form}}" data-format="form">
 		<div class="cf-io-config-group">
 			<label for="cf_io-name">
 				<?php _e( 'Interface Name', 'cf-io' ); ?>
@@ -26,27 +30,6 @@
 			</label>
 			<input type="text" name="slug" value="{{slug}}" data-format="slug" data-sync=".cf-io-subline" data-master="#cf_io-name" id="cf_io-slug" required>
 		</div>
-		<div class="cf-io-config-group">
-			<label for="cf-io-form-form">
-				<?php _e( 'Interface Form', 'cf-io' ); ?>
-			</label>
-
-			<select style="width:395px;" placeholder="<?php _e( 'Form to use as the Interface Base', 'cf-io' ); ?>" name="form" data-live-sync="true" id="cf-io-form-form" >
-				<option value=""></option>
-				{{#each forms}}
-				<option value="{{id}}" {{#is ../form value=id}}selected="selected"{{/is}}>{{name}}</option>
-				{{/each}}
-			</select>
-
-			<p class="description" style="margin-left: 190px;">Form to use as the Interface Base</p>
-		</div>
-
-		{{#script}}
-			jQuery( function($){
-			//	$("#cf-io-form-form").select2();
-			});
-		{{/script}}
-
 		
 		<div class="cf-io-config-group">
 			<label for="cf_io-lock_form">
@@ -55,6 +38,30 @@
 			<label style="width: auto; margin: 0px;"><input type="checkbox" name="lock_form" value="1" {{#if lock_form}}checked="checked"{{/if}} id="cf_io-lock_form"> <?php _e('Remove form form Caldera Forms admin','cf-io'); ?></label>
 
 		</div>
+
+		<div id="cf-io-editing-rules">
+			<div class="cf-io-config-group">
+				<label><?php echo __('Access Roles', 'cf-io'); ?> </label>
+				<div class="cf-io-config-field" style="max-width: 500px; display: inline-block;">
+				<br>
+				<?php
+				global $wp_roles;
+			    $all_roles = $wp_roles->roles;
+			    $editable_roles = apply_filters( 'editable_roles', $all_roles);
+				
+				foreach($editable_roles as $role=>$role_details){
+
+					?>
+					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="access_roles[<?php echo $role; ?>]" value="1"  {{#if access_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
+					<?php 
+				}
+
+				?>
+				<hr>
+				</div>
+			</div>	
+		</div>		
+
 
   		<div class="cf-io-config-group">
 			<label for="cf_io-entry_tab">
@@ -145,7 +152,7 @@
 				<?php _e( 'From', 'cf-io' ); ?>: 
 
 				<select name="relation_field_from" id="cf-io-form-relation_field_from">
-					<option value="_entry_id"><?php _e( 'Entry ID', 'cf-io' ); ?>: </option>
+					<option value="_entry_id"><?php _e( 'Entry ID', 'cf-io' ); ?></option>
 					<?php 
 						foreach ($cf_ios as $io_id => $io_config) {
 							if( $io_id === $cf_io['id'] ){
@@ -178,46 +185,3 @@
 			{{/if}}
 		{{/is}}
  
-  		<div class="cf-io-config-group">
-			<label for="cf_io-color">
-				<?php _e( 'Base Color', 'cf-io' ); ?>
-			</label>
-			<input type="text" name="color" value="{{#if color}}{{color}}{{else}}#e8a200{{/if}}" id="cf_io-color" class="color-field">
-		</div>
-
-
-
- 		<div class="cf-io-config-group">
-			<label for="cf_io-width">
-				<?php _e( 'Modal Width', 'cf-io' ); ?>
-			</label>
-			<input type="number" data-live-sync="true" name="width" value="{{#if width}}{{width}}{{else}}580{{/if}}" id="cf_io-width" style="width:80px;"> px
-		</div>
-
- 		<div class="cf-io-config-group">
-			<label for="cf_io-test">
-				<?php _e( 'Test Modal', 'cf-io' ); ?>
-			</label>
-			<button type="button" class="button cfajax-trigger"
-			data-request="<?php echo site_url( "/cf-api/" ); ?>{{form}}/" 
-			data-load-element="#cf-io-save-indicator"
-			data-modal="newentry"
-			data-modal-title="<?php echo esc_attr( __('Add Entry', 'cf-io') ) ; ?>"
-			data-method="get"
-			data-modal-width="{{width}}"
-			data-modal-height="auto"
-			data-modal-element="div"
-			data-modal-buttons='Close|dismiss'
-			data-callback="calders_forms_init_conditions"
-		>
-			<?php _e('Open Modal', 'cf-io') ; ?>
-		</button>
-
-		</div>		
-
-		
-{{#script}}
-jQuery( function( $ ){
-	$('.cfajax-trigger').baldrick();
-});
-{{/script}}		

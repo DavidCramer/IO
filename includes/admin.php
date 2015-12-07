@@ -17,7 +17,7 @@
 			<span class="cf-io-version">
 				<?php echo CFIO_VER; ?>
 			</span>
-			<span class="add-new-h2 wp-baldrick" data-modal="new-cf_io" data-modal-height="192" data-modal-width="402" data-modal-buttons='<?php _e( 'Create Interface', 'cf-io' ); ?>|{"data-action":"cfio_create_cf_io","data-before":"cfio_create_new_cf_io", "data-callback": "bds_redirect_to_cf_io"}' data-modal-title="<?php _e('New Interface', 'cf-io') ; ?>" data-request="#new-cf_io-form">
+			<span class="add-new-h2 wp-baldrick" data-modal="new-cf_io" data-modal-height="222" data-modal-width="405" data-modal-buttons='<?php _e( 'Create Interface', 'cf-io' ); ?>|{"data-action":"cfio_create_cf_io","data-before":"cfio_create_new_cf_io", "data-callback": "bds_redirect_to_cf_io"}' data-modal-title="<?php _e('New Interface', 'cf-io') ; ?>" data-request="#new-cf_io-form">
 				<?php _e('Add New', 'cf-io') ; ?>
 			</span>
 			<span class="cf-io-nav-separator"></span>
@@ -56,8 +56,13 @@
 	function cfio_create_new_cf_io(el){
 		var cf_io 	= jQuery(el),
 			name 	= jQuery("#new-cf_io-name"),
-			slug 	= jQuery('#new-cf_io-slug')
+			slug 	= jQuery('#new-cf_io-slug'),
+			form 	= jQuery('#new-cf_io-formid'),
 			imp 	= jQuery('#new-cf_io-import'); 
+
+			name.removeClass('io-input-error');
+			slug.removeClass('io-input-error');
+			form.removeClass('io-input-error');
 
 		if( imp.length ){
 			if( !imp.val().length ){
@@ -67,16 +72,25 @@
 			return true;
 		}
 
+
 		if( slug.val().length === 0 ){
-			name.focus();
+			name.focus().addClass('io-input-error');
 			return false;
 		}
 		if( slug.val().length === 0 ){
-			slug.focus();
+			slug.focus().addClass('io-input-error');
+			return false;
+		}
+		if( form.val().length === 0 ){
+			form.focus().addClass('io-input-error');
 			return false;
 		}
 
-		cf_io.data('name', name.val() ).data('slug', slug.val() );
+		cf_io.data({
+			name : name.val(),
+			slug : slug.val(),
+			formid : form.val()
+		});	
 
 	}
 
@@ -131,6 +145,22 @@
 			<?php _e('Interface Slug', 'cf-io'); ?>
 		</label>
 		<input type="text" name="slug" id="new-cf_io-slug" data-format="slug" autocomplete="off">
+	</div>
+	<div class="cf-io-config-group">
+		<label>
+			<?php _e('Interface Form', 'cf-io'); ?>
+		</label>
+		<select style="width:190px;" name="form" id="new-cf_io-formid">
+			<option></option>
+			<?php
+				$forms = Caldera_Forms::get_forms();
+				foreach( $forms as $form ){
+				?>
+				<option value="<?php echo esc_attr( $form['ID'] ); ?>"><?php echo $form['name']; ?></option>
+				<?php
+				}
+				?>
+		</form>
 	</div>
 
 </script>

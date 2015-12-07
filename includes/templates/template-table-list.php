@@ -152,7 +152,9 @@
 				</th>
 				{{/unless}}
 			{{/each}}
+			<?php if( is_user_logged_in() && empty( $no_actions ) ){ ?>
 			<th data-hide="phone,tablet"></th>
+			<?php } ?>
 		</tr>
 	</thead>
 	<tbody id="the-list">
@@ -173,7 +175,7 @@
 
 					{{/unless}}
 				{{/each}}
-				<?php if( is_user_logged_in() ){ ?>
+				<?php if( is_user_logged_in() && empty( $no_actions ) ){ ?>
 				<td style="text-align: right; white-space: nowrap;">
 				<?php if( true === $can_edit ){ ?>
 					<button 
@@ -215,6 +217,7 @@
 					{{/is}}
 					{{/if}}
 				<?php } ?>
+				<?php if( true === $can_view ){ ?>
 					<button type="button" class="button button-small wp-baldrick"
 						data-action="get_entry"
 						data-io="{{../id}}"
@@ -222,7 +225,7 @@
 						data-entry="{{id}}"
 						data-load-element="#cf-io-save-indicator"
 						data-modal="viewer-{{../id}}"
-						data-modal-title="{{../title_prefix}}{{#each ../title}}{{#if show}}{{#find .. id}}{{this}}{{/find}}{{/if}} {{/each}}"
+						data-modal-title="{{#unless ../title_prefix}}View{{else}}{{../title_prefix}}{{#each ../title}}{{#if show}}{{#find .. id}}{{this}}{{/find}}{{/if}} {{/each}}{{/unless}}"
 						data-modal-width="1280"
 						data-modal-height="850"
 						data-modal-element="div"
@@ -230,6 +233,7 @@
 						data-static="true"
 						sdata-modal-buttons='Save Changes|{ "data-for" : "form.{{../form}}" }'
 					>View</button>
+				<?php } ?>
 				</td>
 				<?php } ?>
 			</tr>

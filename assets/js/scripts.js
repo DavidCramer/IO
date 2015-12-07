@@ -178,10 +178,18 @@ jQuery( function($){
 		}
 		if( $('.cf-io-sort').length ){
 			$( ".cf-io-sort" ).sortable({
+				helper: "clone",
 				//handle: ".sortable-item",
+				appendTo: $('#cf-io-sort-holder'),
 				start: function(ev, ui){
 					ui.item.data('moved', true);
-					ui.placeholder.css( 'width', ui.item.outerWidth() );
+					if( ui.placeholder.is('th') ){
+						ui.placeholder.css( 'width', '100%' );
+						ui.placeholder.css( 'height', '36px' );
+						ui.placeholder.css( 'box-sizing', 'padding-box' );
+						ui.placeholder.css( 'padding', '8px 10px' );
+					}
+
 					//ui.placeholder.css( 'margin', ui.item.css( 'marginTop') );					
 					//ui.placeholder.css( 'background', '#efefef' );
 					//ui.item.css( 'background', '#fff' );
@@ -190,6 +198,7 @@ jQuery( function($){
 				},
 				update: function(ev, ui){
 					jQuery('#cf_io-id').trigger('change');
+					cfio_record_change();
 				}
 			});
 			/*

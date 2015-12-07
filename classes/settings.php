@@ -219,12 +219,12 @@ class settings extends core{
 			if( !empty( $config['id'] ) ){
 				$id = $config['id'];
 			}
-			options::create( $config[ 'name' ], $config[ 'slug' ], $id );
+			options::create( $config[ 'name' ], $config[ 'slug' ] );
 			options::update( $config );
 			wp_send_json_success( $config );
 		}
 
-		$new = options::create( $_POST[ 'name' ], $_POST[ 'slug' ] );
+		$new = options::create( $_POST[ 'name' ], $_POST[ 'slug' ], $_POST[ 'formid' ] );
 
 		if ( is_array( $new ) ) {
 			wp_send_json_success( $new );
