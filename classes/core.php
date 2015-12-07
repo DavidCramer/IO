@@ -203,52 +203,55 @@ class core {
 	private static function filter_compare( $filter ){
 		global $wpdb;
 
-		switch ( $filter['compare'] ) {
-			case "is":
-				$return = $wpdb->prepare( " = %s ", $filter['value'] );
-				break;
-			case "isnot":
-				$return = $wpdb->prepare( " != %s ", $filter['value'] );
-				break;
-			case "isin":
-				$list = explode(',', $filter['value']);
-				$list = array_filter( $list, 'trim' );
-				$qlist = array();
-				foreach( $list as $item ){
-					$qlist[] = $wpdb->prepare( "%s", $item );
-				}
-				$return = " IN (" . implode( ",", $qlist ) .")";
-				break;
-			case "isnotin":
-				$list = explode(',', $filter['value']);
-				$list = array_filter( $list, 'trim' );
-				$qlist = array();
-				foreach( $list as $item ){
-					$qlist[] = $wpdb->prepare( "%s", $item );
-				}
-				$return = " NOT IN (" . implode( ",", $qlist ) .")";
-				break;
-			case "greater":
-				$return = $wpdb->prepare( " > %s ", $filter['value'] );
-				break;
-			case "greatereq":
-				$return = $wpdb->prepare( " >= %s ", $filter['value'] );
-				break;
-			case "smaller":
-				$return = $wpdb->prepare( " < %s ", $filter['value'] );
-				break;
-			case "smallereq":
-				$return = $wpdb->prepare( " <= %s ", $filter['value'] );
-				break;
-			case "startswith":
-				$return = $wpdb->prepare( " LIKE %s ", $filter['value'] . '%' );
-				break;
-			case "endswith":
-				$return = $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] );
-				break;
-			case "contains":
-				$return = $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] . '%' );
-				break;
+		$return = null;
+		if( !empty( $filter['compare'] ) ){
+			switch ( $filter['compare'] ) {
+				case "is":
+					$return = $wpdb->prepare( " = %s ", $filter['value'] );
+					break;
+				case "isnot":
+					$return = $wpdb->prepare( " != %s ", $filter['value'] );
+					break;
+				case "isin":
+					$list = explode(',', $filter['value']);
+					$list = array_filter( $list, 'trim' );
+					$qlist = array();
+					foreach( $list as $item ){
+						$qlist[] = $wpdb->prepare( "%s", $item );
+					}
+					$return = " IN (" . implode( ",", $qlist ) .")";
+					break;
+				case "isnotin":
+					$list = explode(',', $filter['value']);
+					$list = array_filter( $list, 'trim' );
+					$qlist = array();
+					foreach( $list as $item ){
+						$qlist[] = $wpdb->prepare( "%s", $item );
+					}
+					$return = " NOT IN (" . implode( ",", $qlist ) .")";
+					break;
+				case "greater":
+					$return = $wpdb->prepare( " > %s ", $filter['value'] );
+					break;
+				case "greatereq":
+					$return = $wpdb->prepare( " >= %s ", $filter['value'] );
+					break;
+				case "smaller":
+					$return = $wpdb->prepare( " < %s ", $filter['value'] );
+					break;
+				case "smallereq":
+					$return = $wpdb->prepare( " <= %s ", $filter['value'] );
+					break;
+				case "startswith":
+					$return = $wpdb->prepare( " LIKE %s ", $filter['value'] . '%' );
+					break;
+				case "endswith":
+					$return = $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] );
+					break;
+				case "contains":
+					$return = $wpdb->prepare( " LIKE %s ", '%' . $filter['value'] . '%' );
+					break;
+			}
 		}
 
 		// field or column
@@ -312,10 +315,20 @@ class core {
 
 		// parent lock
 		$parent_filter = null;
-		$parent_join = null;
 		$search = null;
+		$filter_joins = array();
+		$filter_join = null;
+		$parent_joins = array();
+		$parent_join = null;
+
+		// sorting
+		$sorting = null;
+		if( !empty( $params['sort'] ) && !empty( $form['fields'][ $params['sort'] ] ) ){
+			$filter_joins[] = "RIGHT JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `sorting_field` ON ( `sorting_field`.`entry_id` = `pri`.`id` && `sorting_field`.`field_id` = '" . $params['sort'] . "' )";			
+		}
+		$sorting = self::filter_compare( array('field' => $params['sort'], '_id' => 'sorting_field' ) ) . " " . strtoupper( $params['sort_order'] );
 		if( !empty( $params['filters'] ) ){
-			$filter_joins = array();
+			
 
 			foreach( $params['filters'] as $filter ){
 				
@@ -345,48 +358,84 @@ class core {
 				$search .= implode(' OR ', $keys ) . ')';
 				
 			}
-			$parent_join .= implode( "\r", $filter_joins );
 			
 		}
+		$filter_join .= implode( "\r", $filter_joins );
+
+		// parent lock
+		$parent_filter = null;
+		if( !empty( $params['parent'] ) ){
+			$parent_filter = "AND
+			`lock_field`.`field_id` = '" . $params['relation_field'] . "'
+			AND
+			`lock_field`.`value` = '" . $params['parent'] . "'";
+			$parent_joins[] = "RIGHT JOIN `" . $wpdb->prefix . "cf_form_entry_values` AS `lock_field` ON ( `lock_field`.`entry_id` = `pri`.`id` )";
+		}
+		$parent_join .= implode( "\r", $parent_joins );
+		
 
 		// counter
-		$query = " SELECT
-		COUNT( `pri`.`id` ) AS `total`,
-		GROUP_CONCAT( `pri`.`id` ) AS `list`
-
+		$count_query = " SELECT
+		COUNT( `pri`.`id` ) as `total`
 		FROM `" . $wpdb->prefix . "cf_form_entries` AS `pri`
 		" . $parent_join . "
-
 		WHERE
 		`pri`.`form_id` = '" . $form['ID'] . "'
 		" . $parent_filter . "
 		" . $search . "
 		";
+		$total = $wpdb->get_var( $count_query );
+		$pages = ceil( $total / $params['limit'] );
+		if( $params['page'] > $pages ){
+			$params['page'] = $pages;
+		}
+		$offset = ($params['page'] - 1) * $params['limit'];
+		if( $offset < 0 ){
+			$offset = 0;
+		}
+		// query
+		$query = " SELECT
+		
+		`pri`.`id`
 
-		$totals = $wpdb->get_row( $query );
+		FROM `" . $wpdb->prefix . "cf_form_entries` AS `pri`
+		" . $parent_join . "
+		" . $filter_join . "
 
-		$pages = 0;
+		WHERE
+		`pri`.`form_id` = '" . $form['ID'] . "'
+		" . $parent_filter . "
+		" . $search . "
+		ORDER BY " . $sorting . "
+		LIMIT " . $offset . "," . $params['limit'] . "
+		";
+
+		$rawresults = $wpdb->get_results( $query, ARRAY_A );
+
+		$query_results = array(
+			'total'	=> 0,
+			'list'	=> array()
+		);
+		foreach( $rawresults as $result ){
+			$query_results['total'] += 1;
+			$query_results['list'][] = $result['id'];
+		}
+
 		$return = array();
-		// sort thing
-		$sort = array();
-		if( !empty( $totals->total ) ){
-			$pages = ceil( $totals->total / $params['limit'] );
-			if( $params['page'] > $pages ){
-				$params['page'] = $pages;
-			}
-			$offset = ($params['page'] - 1) * $params['limit'];
-			
-			$list = explode(',', $totals->list );
+
+		if( !empty( $query_results['total'] ) ){
 			$items = 0;
 
-			
-			foreach( $list as $entry_instance=>$entry_id ){
+			foreach( $query_results['list'] as $entry_instance=>$entry_id ){
 				$entry =\Caldera_Forms::get_entry( $entry_id, $form );
-
+				$user_name = null;
+				if( !empty( $entry['user']['name'] ) ){
+					$user_name = $entry['user']['name'];
+				}
 				$return[ 'res' . $entry_id ] = array(
 					'id'		=>	$entry_id,
 					'form_id' 	=>	$form['ID'],
-					'user_id'	=> 	$entry['user']['name'],
+					'user_id'	=> 	$user_name,
 					'datestamp'	=>	$entry['date'],
 					'status'	=>	$entry['status'],
 				);
@@ -394,27 +443,20 @@ class core {
 				foreach( $form['fields'] as $field_id=>$field ){
 					if( !empty( $entry['data'][ $field_id ] ) ){
 						$return[ 'res' . $entry_id ][ $field_id ] = $entry['data'][ $field_id ]['view'];
-						$sort[ 'res' . $entry_id ] = $entry['data'][ $field_id ]['value'];
 					}else{
 						$return[ 'res' . $entry_id ][ $field_id ] = null;
-						$sort[ 'res' . $entry_id ] = null;
 					}
 				}
 				
 			}
 
-			if( $params['sort_order'] == 'asc' ){
-				array_multisort($sort, SORT_ASC, $return);
-			}else{
-				array_multisort($sort, SORT_DESC, $return);
-			}
 
 		}
 		
 		$out = array(
 			//'fields' => $data['fields'],
-			'total' => ( !empty( $totals->total ) ? $totals->total : 0 ),
-			'status_totals' => $totals,
+			'total' => $total,
+			'status_totals' => $query_results,
 			'pages' => $pages,
 			'params' => $params,
 			'entries' => $return,
@@ -423,7 +465,7 @@ class core {
 		if( !empty( $_POST['process'] ) && $_POST['process'] == 'export' ){
 			$transient_id = uniqid('cf_report');
 			$trans = array(
-				'list' => $totals->list,
+				'list' => $query_results['list'],
 				'form' => $form['ID']
 			);
 			set_transient( $transient_id, $trans, 120 );

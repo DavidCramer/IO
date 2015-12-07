@@ -152,13 +152,13 @@ if( is_admin() ){
 
 	{{#each interfaces}}
 	<div id="panel-interface-{{@key}}-tab" class="tab-detail-panel" data-tab="{{name}}">
-		<form id="panel-interface-{{@key}}-form">
+		<form id="panel-interface-{{@key}}-form" data-id="{{@key}}">
 			<input name="id" value="{{id}}" type="hidden">
 			<input name="name" value="{{name}}" type="hidden">
 			<input name="slug" value="{{slug}}" type="hidden">
 			<input name="fields" value="{{json fields}}" type="hidden">
 			<input name="form" value="{{form}}" type="hidden">
-			<input name="params" value="{{#if params}}{{json params}}{{/if}}" type="hidden" id="params-init-{{id}}">
+			<input name="params" value="" type="hidden" id="params-init-{{id}}">
 			{{#is relation_field_from value="_entry_id"}}
 				<input name="parent_id" value="{{../entry_id}}" type="hidden">
 			{{else}}

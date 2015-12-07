@@ -468,11 +468,34 @@ jQuery( function($){
 		parent.remove();
 		cfio_record_change();
 	});
-	
+	// row remover global neeto
+	$(document).on('click', '.baldrick-modal-body [data-remove-element]', function(e){
+		var clicked = $(this),
+			elements = $(clicked.data('removeElement')),
+			form = clicked.closest( 'form' ).find('.filter-wrapper'),
+			id = form.data('id'),
+			object = {};
+
+		if( clicked.data('confirm') ){
+			if( !confirm(clicked.data('confirm')) ){
+				return;
+			}
+		}
+		elements.remove();
+		object = form.formJSON();
+		console.log( object.params );
+		$( '#params-init-' + id ).val( JSON.stringify( object.params ) );
+		$('#entry-trigger-' + id ).trigger('change');
+	});	
 	// row remover global neeto
 	$(document).on('click', '[data-remove-element]', function(e){
 		var clicked = $(this),
 			elements = $(clicked.data('removeElement'));
+
+			if( clicked.closest('.baldrick-modal-body').length ){
+				return;
+			}
+
 		if( clicked.data('confirm') ){
 			if( !confirm(clicked.data('confirm')) ){
 				return;
@@ -528,6 +551,15 @@ jQuery( function($){
 	// initialize live sync rebuild
 	$(document).on('change', '[data-live-sync]', function(e){
 		cfio_record_change();
+	});
+
+	$(document).on('change', '.baldrick-modal-body [data-live-sync]', function(e){
+		var form = $(this).closest( 'form' ),
+			id = form.data('id'),
+			object = form.formJSON();
+
+		$( '#params-init-' + id ).val( JSON.stringify( object.params ) );
+		$('#entry-trigger-' + id ).trigger('change');
 	});
 
 	// initialise baldrick triggers
