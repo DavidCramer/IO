@@ -79,7 +79,7 @@
 
 		<li class="{{#is _current_tab value="#cf-io-panel-display"}}active {{/is}}cf-io-nav-tab">
 			<a href="#cf-io-panel-display">
-				<?php _e('Modals', 'cf-io') ; ?>
+				<?php _e('Display', 'cf-io') ; ?>
 			</a>
 		</li>
 

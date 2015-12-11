@@ -1,3 +1,4 @@
+
 	<div class="filter-line-{{_id}}">
 		<div class="filter-item filter-{{type}}">
 			<span class="filter-remove-line" data-remove-element=".filter-line-{{_id}}"><span class="dashicons dashicons-no-alt"></span></span>
@@ -28,6 +29,9 @@
 				{{#is compare value="isnull"}}
 					<input type="hidden" id="field_{{_id}}" name="{{:name}}[value]" value="{{value}}">
 				{{else}}
+					<?php if( !empty( $io_editor ) ){ ?>
+					<input type="text" class="magic-tag-enabled" id="field_{{_id}}" name="{{:name}}[value]" value="{{value}}">
+					<?php }else{ ?>
 					{{#is field value="user_id"}}
 						<select id="field_{{_id}}" name="{{:name}}[value]">
 							<option value="_current_id"{{#is value value="_current_id"}} selected="selected"{{/is}}><?php _e('Current Logged In User', 'cf-io'); ?></option>
@@ -48,7 +52,7 @@
 						</select>
 					{{/is}}
 					{{#is field value="id"}}
-						<input type="text" id="field_{{_id}}" name="{{:name}}[value]" value="{{value}}">
+						<input type="text" id="field_{{_id}}" class="magic-tag-enabled" name="{{:name}}[value]" value="{{value}}">
 					{{/is}}
 					{{#is field value="datestamp"}}
 						<input type="text" name="{{:name}}[value]" value="{{value}}" data-date-start-view="month" data-date-format="yyyy-mm-dd" id="field_{{_id}}" class="is-cfdatepicker" data-provide="cfdatepicker">
@@ -74,10 +78,11 @@
 								<?php } ?>
 							</select>
 						<?php }else{ ?>
-							<input type="text" id="field_{{_id}}" name="{{:name}}[value]" value="{{value}}">
+							<input type="text" id="field_{{_id}}" class="magic-tag-enabled" name="{{:name}}[value]" value="{{value}}">
 						<?php } ?>
 						{{/is}}
 					<?php } ?>
+				<?php } ?>
 				{{/is}}
 			</div>
 			<div class="filter-actions">

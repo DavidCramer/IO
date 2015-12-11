@@ -40,45 +40,79 @@ class settings extends core{
 		// delete
 		add_action( 'wp_ajax_cfio_delete_cf_io', array( $this, 'delete_cf_io') );
 
-		// update page binds
-		add_action( 'wp_ajax_cfio_bind_io', function(){
-
-			$pagebinds_tag = 'io_page_binds';
-			$pagebinds = options::get_single( $pagebinds_tag );
-			if( empty( $pagebinds ) ){
-				$pagebinds = array();
-			}
-
-			$ios = options::get_registry();
-			if( empty( $ios ) ){
-				$ios = array();
-			}
-			// check for removed ios
-			foreach( $pagebinds as $io_id => $binding ){
-				if( empty( $ios[ $io_id ] ) ){
-					unset( $pagebinds[ $io_id ] );
-				}
-			}
-			if( empty( $ios[ $_POST['id'] ] ) ){
-				wp_send_json_error( array( 'message' => 'invalid page id' ) );
-			}
-			$io_id = $ios[ $_POST['id'] ]['id'];
-			$pagebinds[ $io_id ] = (int) $_POST['page'];
-
-			// save it
-			$page_bind_object = array(
-				'id' => $pagebinds_tag,
-				'pages' => $pagebinds
-			);
-			options::update( $page_bind_object );
-
-			wp_send_json_success( [ 'message' => 'complete' ] );
-		});
-
+		// add filter for CF Auto Populating tab
+		add_filter( 'caldera_forms_get_panel_extensions', array( $this, 'add_autopopulate_panel' ) );
 		
+		// add autopopulate from form entries
+		add_action( 'caldera_forms_autopopulate_types', array( $this, 'autopopulate_option' ), 25 );
+
+		// add auto populate template
+		add_action ("caldera_forms_autopopulate_type_config", array( $this, "autopopulate_config" ) );
 
 	}
 
+
+	
+	/**
+	 * Add advanced auto populate option to autopopulate source
+	 *
+	 * @uses "caldera_forms_autopopulate_types" action
+	 *
+	 * @since 0.0.1
+	 */
+	public function autopopulate_option(){
+		echo "<option value=\"form_entries\"{{#is auto_type value=\"form_entries\"}} selected=\"selected\"{{/is}}>" . __('Form Entries', 'caldera-forms') . "</option>";
+	}
+
+	
+	/**
+	 * Add advanced auto populate template instruction
+	 *
+	 * @uses "caldera_forms_autopopulate_type_config" action
+	 *
+	 * @since 0.0.1
+	 */
+	public function autopopulate_config(){
+		?>
+
+		<div class="caldera-config-group caldera-config-group-auto-form_entries auto-populate-type-panel" style="display:none;">
+			<div class="caldera-config-field">
+				See the IO Auto populate tab
+			</div>
+		</div>
+
+		<?php
+	}
+
+	
+	/**
+	 * Add advanced auto populate tab to CF Editor
+	 *
+	 * @uses "caldera_forms_get_panel_extensions" filter
+	 *
+	 * @since 0.0.1
+	 */
+	public function add_autopopulate_panel( $panels ){
+
+		$tabs = $panels['form_layout']['tabs'];
+		$panels['form_layout']['tabs'] = array();
+		$panels['form_layout']['setup']['styles'][] = CFIO_URL . 'assets/css/autopopulate-panel.css';
+		$panels['form_layout']['setup']['scripts'][] = CFIO_URL . 'assets/js/autopopulate-panel.js';
+		foreach( $tabs as $tab_id=>$tab ){
+			if( $tab_id == 'processors' ){
+				$panels['form_layout']['tabs']['auto_populate'] = array(
+					'name' => 'Auto-Populate',
+					'location' => 'lower',
+					'label' => 'Advanced Auto-Populate',
+					'canvas' => CFIO_PATH . 'includes/templates/autopopulate-template.php',
+
+				);
+			}
+			$panels['form_layout']['tabs'][ $tab_id ] = $tab;
+		}		
+
+		return $panels;
+	}
 	/**
 	 * builds an export
 	 *
@@ -262,12 +296,26 @@ class settings extends core{
 			foreach( $cf_ios as $cf_io_id => $cf_io ){
 				
 				$cf_io = \calderawp\cfio\options::get_single( $cf_io_id );
+				if( empty( $cf_io['access_roles'] ) ){
+					continue;
+				}
+				$has_access = false;
+				foreach( $cf_io['access_roles'] as $checkrole => $checken ){
+					if( current_user_can( $checkrole ) ){
+						$has_access = $checkrole;
+						break;
+					}
+				}
+				if( empty( $has_access ) ){
+					continue;
+				}
+
 				if( empty( $cf_io['location'] ) ){
 					$this->plugin_screen_hook_suffix[ 'cf_io-' . $cf_io['id'] ] =  add_submenu_page(
 						'cf_io',
 						$cf_io['name'],
 						$cf_io['name'],
-						'manage_options',
+						$has_access,
 						'cf_io-' . $cf_io['id'],
 						array( $this, 'create_admin_page' )
 					);
@@ -284,7 +332,7 @@ class settings extends core{
 							$this->plugin_screen_hook_suffix[ 'cf_io-' . $cf_io['id'] ] = add_menu_page(
 								$cf_io['name'],
 								$cf_io['name'],
-								'manage_options', 'cf_io-' . $cf_io['id'],
+								$has_access, 'cf_io-' . $cf_io['id'],
 								array( $this, 'create_admin_page' ),
 								$cf_io['icon'],
 								$cf_io['priority']
@@ -296,7 +344,7 @@ class settings extends core{
 								$cf_io['parent'],
 								$cf_io['name'],
 								$cf_io['name'],
-								'manage_options',
+								$has_access,
 								'cf_io-' . $cf_io['id'],
 								array( $this, 'create_admin_page' )
 							);

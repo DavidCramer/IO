@@ -1,0 +1,123 @@
+#io-autopopulation-wrapper {
+  width: 320px;
+}
+.io-autopopulation-field-list {
+  margin: 0;
+  padding: 0;
+  float: left;
+  width: 100%;
+}
+.io-field-nav {
+  background: #ededed none repeat scroll 0 0;
+  box-shadow: 0 1px 0 #dfdfdf;
+  cursor: pointer;
+  display: block;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+}
+.io-field-nav:hover{
+	background: #f8f8f8 none repeat scroll 0 0;	
+}
+.io-field-nav.active {
+  background: #fff none repeat scroll 0 0;
+}
+
+.io-autopopulation-field-config{
+  margin-left: 350px;
+  width: 700px;
+}
+
+
+
+.filter-wrapper {
+  border-bottom: 1px solid #dfdfdf;
+  border-left: 1px solid #dfdfdf;
+  margin: 6px 0 6px 30px;
+}
+
+.baldrick-modal-body .filter-wrapper {
+  border-bottom: 1px solid #dfdfdf;
+  box-shadow: 19px 0 0 #fff inset, 20px 0 0 #dfdfdf inset;
+}
+
+
+.filter-item {
+  background: #fff none repeat scroll 0 0;
+  border: 1px solid #dfdfdf;
+  box-shadow: 18px 0 0 #e9e9e9 inset, 19px 0 0 #dfdfdf inset, 0 1px 3px rgba(0, 0, 0, 0.04), 101px 0 0 #f1f1f1 inset, 102px 0 0 #dfdfdf inset;
+  padding: 6px 6px 6px 23px;
+  margin-bottom: 6px;
+  margin-left: 0;
+  position: relative;
+}
+
+.filter-item.filter-or {
+  border-top: medium none;
+  box-shadow: 18px 0 0 #e9e9e9 inset, 19px 0 0 #dfdfdf inset, 0 1px 3px rgba(0, 0, 0, 0.04), 59px 0 0 #f1f1f1 inset, 60px 0 0 #dfdfdf inset;
+  margin: -6px 0 6px 42px;
+}
+
+.filter-item .filter-clause {
+  color: #9f9f9f;
+  display: inline-block;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+  width: 70px;
+}
+.filter-item.filter-or .filter-clause {
+  width: 33px;
+}
+.filter-remove-line {
+  color: #cfcfcf;
+  cursor: pointer;
+  left: -1px;
+  position: absolute;
+  top: -1px;
+}
+.filter-remove-line:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid #d4d4d4;
+  color: #a2a2a2;
+}
+.filter-wrapper .button.filter-add-and{
+  margin: 3px 3px 10px 12px;
+  text-transform: uppercase;
+  color: #9f9f9f;
+  font-weight: bold;
+}
+.filter-item .filter-field {
+  display: inline-block;
+  margin-left: 21px;
+}
+.filter-item.filter-or .filter-field {
+  margin-left: 16px;
+}
+.filter-item .filter-field select{
+  vertical-align: inherit;
+}
+.filter-item .filter-field .filter-field-select {
+  width: 180px;
+}
+.filter-item .filter-field .filter-field-compare {
+  text-align: center;
+}
+.filter-item .filter-actions {
+  display: inline;
+  margin-left: 24px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+.filter-item .filter-actions .button {
+  color: #9f9f9f;
+  margin-right: 6px;
+}
+.filter-item .filter-actions .dashicons {
+  padding: 2px 0;
+}
+.filter-item.filter-or .filter-action-or{
+  display: none;
+}
+.widefat th.sortable, .widefat th.sorted {
+  padding: 10px;
+}

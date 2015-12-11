@@ -30,7 +30,7 @@
 
 					?>
 					{{#if access_roles/<?php echo $role; ?>}}
-					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="view_roles[<?php echo $role; ?>]" value="1"  {{#if ../view_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
+					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="view_roles[<?php echo $role; ?>]" value="1"  {{#if view_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
 					{{/if}}
 					<?php 
 				}
@@ -67,7 +67,7 @@
 
 					?>
 					{{#if access_roles/<?php echo $role; ?>}}
-					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="edit_roles[<?php echo $role; ?>]" value="1"  {{#if ../edit_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
+					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="edit_roles[<?php echo $role; ?>]" value="1"  {{#if edit_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
 					{{/if}}
 					<?php 
 				}
@@ -79,6 +79,47 @@
 			</div>	
 		</div>		
 		{{/if}}
+
+
+		<div class="cf-io-config-group">
+			<label for="cf_io-trash">
+				<?php _e( 'Enable Trash', 'cf-io' ); ?>
+			</label>
+			<label style="width: auto; margin: 6px 0px 0px;"><input type="checkbox" name="trash" data-live-sync="true" value="1" {{#if trash}}checked="checked"{{/if}} id="cf_io-trash"> <?php _e('Show the Trash / Restore button on entries','cf-io'); ?></label>
+		</div>
+		
+		{{#if trash}}
+		<div id="cf-io-trash-rules">
+			<div class="cf-io-config-group">
+				<label><?php echo __('Trash Roles', 'cf-io'); ?> </label>
+				<div class="cf-io-config-field" style="max-width: 500px; display: inline-block;">
+				<label><input type="checkbox" class="field-config visible-all-roles" data-live-sync="true" data-set="form_role" value="1" name="trash_roles[_all_roles]" {{#if trash_roles/_all_roles}}checked="checked"{{/if}}> <?php echo __('All'); ?></label>
+				{{#unless trash_roles/_all_roles}}
+				<hr>
+				<?php
+				global $wp_roles;
+			    $all_roles = $wp_roles->roles;
+			    $editable_roles = apply_filters( 'trash_roles', $all_roles);
+				
+				foreach($editable_roles as $role=>$role_details){
+
+					?>
+					{{#if access_roles/<?php echo $role; ?>}}
+					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="trash_roles[<?php echo $role; ?>]" value="1"  {{#if trash_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
+					{{/if}}
+					<?php 
+				}
+
+				?>
+				{{/unless}}
+				<hr>
+				</div>
+			</div>	
+		</div>		
+		{{/if}}
+
+
+
 		<div class="cf-io-config-group">
 			<label for="cf_io-capture">
 				<?php _e( 'Enable Capture', 'cf-io' ); ?>
@@ -103,7 +144,7 @@
 
 					?>
 					{{#if access_roles/<?php echo $role; ?>}}
-					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="capture_roles[<?php echo $role; ?>]" value="1"  {{#if ../capture_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
+					<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="capture_roles[<?php echo $role; ?>]" value="1"  {{#if capture_roles/<?php echo $role; ?>}}checked="checked"{{/if}}> <?php echo $role_details['name']; ?></label>
 					{{/if}}
 					<?php 
 				}

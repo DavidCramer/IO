@@ -9,6 +9,68 @@
  * @copyright 2015 David Cramer & CalderaWP LLC
  */
 
+function io_build_magic_tags( $cf_io ){
+	
+	?>
+	<span class="cf-io-magic-tags-definitions" data-tag="user:id" data-category="User"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="user:user_login" data-category="User"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="user:first_name" data-category="User"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="user:last_name" data-category="User"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="user:user_email" data-category="User"></span>
+
+	<?php
+	$users_query = new \WP_User_Query( array( 
+		'fields'	=> array( 'ID', 'display_name' ),
+		'orderby'	=>	'display_name',
+		'number' => -1
+	) );
+	$users = $users_query->get_results();
+	foreach( $users as $user ){
+		?><span class="cf-io-magic-tags-definitions" data-tag="user:<?php echo $user->ID; ?>|<?php echo $user->display_name; ?>" data-category="User"></span><?php	
+	}
+	$this_form = \Caldera_Forms::get_form( $cf_io['form'] );
+	foreach( $this_form['fields'] as $field_id => $field ){ 
+		if( in_array( $field_id, array( "user_id", "id", "datestamp", "status" ) ) ){ continue; }
+		// get field
+		$field = apply_filters( 'caldera_forms_render_get_field', $field, $this_form );
+		if( !empty( $field['config']['option'] ) ){
+			foreach( $field['config']['option'] as $option_id=>$option ){
+				$tag = $option['value'];
+				if( $option['value'] != $option['label'] ){
+					$tag = $option['value'] . "|" . $option['label'];
+				}
+			?>
+			<span class="cf-io-magic-tags-definitions" data-tag="<?php echo $tag; ?>" data-category="<?php echo $field['label']; ?>"></span>		
+			<?php }
+		}
+	}
+
+	?>
+
+
+
+	<span class="cf-io-magic-tags-definitions" data-tag="date|today" data-category="Date"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="date|yesterday" data-category="Date"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="date|-2 days" data-category="Date"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="date:now" data-category="Date"></span>
+
+	<span class="cf-io-magic-tags-definitions" data-tag="ip" data-category="Variable"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="get:*" data-category="Variable"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="post:*" data-category="Variable"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="request:*" data-category="Variable"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="login_url" data-category="Variable"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="logout_url" data-category="Variable"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="register_url" data-category="Variable"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="lostpassword_url" data-category="Variable"></span>
+
+	<span class="cf-io-magic-tags-definitions" data-tag="post_meta:*" data-category="Post"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="embed_post:ID" data-category="Post"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="embed_post:post_title" data-category="Post"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="embed_post:permalink" data-category="Post"></span>
+	<span class="cf-io-magic-tags-definitions" data-tag="embed_post:post_date" data-category="Post"></span>
+	<?php
+
+}
 
 function io_build_card( $cf_io, $child = false ){
 	if( true === $child ){

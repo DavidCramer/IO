@@ -75,6 +75,11 @@ class core {
 		add_action( 'wp_ajax_io_browse_entries', array( $this, 'browse_entries' ) );
 		add_action( 'wp_ajax_nopriv_io_browse_entries', array( $this, 'browse_entries' ) );
 
+		// add CF magic tag for IO
+		add_filter( 'caldera_forms_get_magic_tags', array( $this, 'register_io_magic_tag'), 12, 2 );
+		add_filter( 'caldera_forms_do_magic_tag', array( $this, 'io_magic_tag') );
+
+
 		add_action( 'caldera_forms_submit_complete', array( $this, 'connect_entry_reference' ), 10, 1);
 
 		add_filter( 'caldera_forms_get_forms', function( $forms ){
@@ -114,6 +119,7 @@ class core {
 					}
 				}
 			}
+
 			return $form;
 		});
 
@@ -121,6 +127,73 @@ class core {
 
 		//add_action( 'caldera_forms_autopopulate_types', array( $this, 'add_autopopulate_type' ) );
 
+	}
+
+
+	
+	/**
+	 * Register IO magic tag declaration
+	 *
+	 * @uses "caldera_forms_get_magic_tags" filter
+	 *
+	 * @param $tag
+	 *
+	 * @return string added magic tags
+	 */
+	public function register_io_magic_tag( $tags, $form ){
+
+		$cf_ios = options::get_registry();
+		if( empty( $cf_ios ) ){
+			$cf_ios = array();
+		}
+		foreach( $cf_ios as $cf_io_id => $cf_io ){
+			if( !empty( $cf_io['relation'] ) && $cf_io['form'] == $form ){			
+				// get the relation form field
+				$relation_io = $cf_ios[ $cf_io['relation'] ];
+				$relation_form = \Caldera_Forms::get_form( $relation_io['form'] ); 
+				foreach( $relation_io['fields'] as $field_id=>$field ){
+					if( isset( $relation_form['fields'][ $field_id ] ) ){
+						$tag = 'io:' .  $cf_io['slug'] . ':' . $relation_form['fields'][ $field_id ]['slug'];
+					}else{
+						$tag = 'io:' .  $cf_io['slug'] . ':' . $field_id;
+					}
+					$tags['system']['tags'][] = $tag;
+				}
+				//var_dump( $relation_io['fields'] );
+			}
+
+		}
+
+		return $tags;
+	}
+	/**
+	 * IO magic tag declaration
+	 *
+	 * @uses "caldera_forms_do_magic_tag" filter
+	 *
+	 * @param $tag
+	 *
+	 * @return string completed tag or unfiultered tag if not matched
+	 */
+	public function io_magic_tag( $tag ){
+		$parts = explode( ':', $tag );
+		if( count( $parts ) === 3 && $parts[0] === 'io' ){
+
+			if( !empty( $_REQUEST['io_parent'] ) ){
+				$io_parent = filter_var( $_REQUEST['io_parent'], FILTER_SANITIZE_STRING );
+				$entry_detail = \Caldera_Forms::get_entry_detail( $io_parent );
+				$form = \Caldera_Forms::get_form( $entry_detail['form_id'] );
+				$entry = \Caldera_Forms::get_entry( $io_parent, $form );
+				foreach ($form['fields'] as $field_id => $field ) {
+					if( $field['slug'] == $parts[2] ){
+						if( !empty( $entry['data'][ $field_id ] ) ){
+							return $entry['data'][ $field_id ]['value'];
+						}
+					}
+				}
+			}
+		}
+		return $tag;
 	}
 
 	/**
@@ -149,7 +222,7 @@ class core {
 				if( $io_id == $_POST['io'] ){
 					// add extras
 					$io_configs = options::get_single( $io_id );
-					$entry['entry_tab'] = $io_configs['entry_tab'];
+					$entry['entry_tab'] = $io_configs['singular'];
 				}
 			}
 			if( !empty( $relations ) ){
@@ -204,7 +277,9 @@ class core {
 		global $wpdb;
 
 		$return = null;
-
+		if( !empty( $filter['value'] ) ){
+			$filter['value'] = \Caldera_Forms::do_magic_tags( $filter['value'] );
+		}
 		//
 		// field or column
 		switch ( $filter['field'] ) {
@@ -701,7 +776,7 @@ class core {
 						}
 					}
 				}	
-			}		
+			}
 		
 		}
 

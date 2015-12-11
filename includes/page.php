@@ -10,49 +10,7 @@
  */
 
 $cf_io = \calderawp\cfio\options::get_single( $form_base );
-$can_capture = false;
-if( !empty( $cf_io['capture_roles'] ) ){
- 	if( !empty( $cf_io['capture_roles']['_all_roles'] ) ){
- 		$can_capture = true;
- 	}else{
- 		foreach( $cf_io['capture_roles'] as $role => $enabled ){
- 			if( current_user_can( $role ) ){
- 				$can_capture = true;
- 				break;
- 			}
- 		}
- 	}
-}
 
-$can_edit = false;
-if( !empty( $cf_io['edit_roles'] ) ){
- 	if( !empty( $cf_io['edit_roles']['_all_roles'] ) ){
- 		$can_edit = true;
- 	}else{
- 		foreach( $cf_io['edit_roles'] as $role => $enabled ){
- 			if( current_user_can( $role ) ){
- 				$can_edit = true;
- 				break;
- 			}
- 		}
- 	}
-}
-$can_view = false;
-if( !empty( $cf_io['view_roles'] ) ){
- 	if( !empty( $cf_io['view_roles']['_all_roles'] ) ){
- 		$can_view = true;
- 	}else{
- 		foreach( $cf_io['view_roles'] as $role => $enabled ){
- 			if( current_user_can( $role ) ){
- 				$can_view = true;
- 				break;
- 			}
- 		}
- 	}
-}
-if( empty( $can_capture ) && empty( $can_edit ) && empty( $can_view ) ){
-	$no_actions = true;
-}
 // clear out locked filters
 $cf_io['params']['filters'] = array();
 
@@ -133,6 +91,10 @@ if( false === $cf_io ){
 $cf_io['_current_tab'] = '#cf-io-panel-form';
 
 if( is_admin() ){
+
+// magic tags
+io_build_magic_tags( $cf_io );
+
 ?>
 <div class="wrap cf-io-calderamain-canvas" id="cf-io-main-canvas">
 	<span class="wp-baldrick spinner" style="float: none; display: block;" data-target="#cf-io-main-canvas" data-before="cfio_canvas_reset" data-callback="cfio_canvas_init" data-type="json" data-request="#cf-io-live-config" data-event="click" data-template="#main-ui-template" data-autoload="true"></span>
@@ -177,6 +139,8 @@ if( is_admin() ){
 			<input name="slug" value="{{slug}}" type="hidden">
 			<input name="fields" value="{{json fields}}" type="hidden">
 			<input name="form" value="{{form}}" type="hidden">
+			<input type="hidden" value="{{plural}}" name="plural">
+			<input type="hidden" value="{{singular}}" name="singular">
 			<input name="params" value="" type="hidden" id="params-init-{{id}}">
 			{{#is relation_field_from value="_entry_id"}}
 				<input name="parent_id" value="{{../entry_id}}" type="hidden">
@@ -248,6 +212,7 @@ foreach( $cf_ios as $cf_io_id=>$cf_io_config ){
 		continue;
 	}
 	//$done[] = $cf_io_config['form'];
+	$cf_io_config = \calderawp\cfio\options::get_single( $cf_io_id );
 ?>
 <script type="text/html" id="cfajax_<?php echo $cf_io_config['form']; ?>-tmpl">
 {{#script}}
@@ -256,6 +221,67 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 </script>
 <script type="text/html" data-handlebars-partial="list_template_<?php echo $cf_io_id; ?>">
 <?php
+
+	$can_capture = false;
+	if( !empty( $cf_io_config['capture_roles'] ) ){
+		if( !empty( $cf_io_config['capture_roles']['_all_roles'] ) ){
+			$can_capture = 'cap 1';
+		}else{
+			foreach( $cf_io_config['capture_roles'] as $role => $enabled ){
+				if( current_user_can( $role ) ){
+					$can_capture = 'cap 2';
+					break;
+				}
+			}
+		}
+	}
+
+	$can_edit = false;
+	if( !empty( $cf_io_config['edit_roles'] ) ){
+		if( !empty( $cf_io_config['edit_roles']['_all_roles'] ) ){
+			$can_edit = 'edit 1';
+		}else{
+			foreach( $cf_io_config['edit_roles'] as $role => $enabled ){
+				if( current_user_can( $role ) ){
+					$can_edit = 'edit 2';
+					break;
+				}
+			}
+		}
+	}
+
+	$can_trash = false;
+	if( !empty( $cf_io_config['trash_roles'] ) ){
+		if( !empty( $cf_io_config['trash_roles']['_all_roles'] ) ){
+			$can_trash = 'trash 1';
+		}else{
+			foreach( $cf_io_config['trash_roles'] as $role => $enabled ){
+				if( current_user_can( $role ) ){
+					$can_trash = 'trash 2';
+					break;
+				}
+			}
+		}
+	}
+
+
+	$can_view = false;
+	if( !empty( $cf_io_config['view_roles'] ) ){
+		if( !empty( $cf_io_config['view_roles']['_all_roles'] ) ){
+			$can_view = 'view 1';
+		}else{
+			foreach( $cf_io_config['view_roles'] as $role => $enabled ){
+				if( current_user_can( $role ) ){
+					$can_view = 'view 2';
+					break;
+				}
+			}
+		}
+	}
+	if( empty( $can_capture ) && empty( $can_edit ) && empty( $can_view ) && empty( $can_trash ) ){
+		$no_actions = true;
+	}
+
 	// pull in the table list
 	include CFIO_PATH . 'includes/templates/template-table-list.php';
 
@@ -263,7 +289,7 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 </script>
 <script type="text/html" id="io-list-template-<?php echo $cf_io_id; ?>">
 	<?php
-		$cf_io_config = \calderawp\cfio\options::get_single( $cf_io_id );
+		
 		// clear out saved forms
 		$cf_io_config['forms'] = array();
 		$cf_io_config['forms'][ $cf_io_config['form'] ] = \Caldera_Forms::get_form( $cf_io_config['form'] );
@@ -271,25 +297,40 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 		$can_capture = false;
 		if( !empty( $cf_io_config['capture_roles'] ) ){
 		 	if( !empty( $cf_io_config['capture_roles']['_all_roles'] ) ){
-		 		$can_capture = true;
+		 		$can_capture = 'cap 3';
 		 	}else{
 		 		foreach( $cf_io_config['capture_roles'] as $role => $enabled ){
 		 			if( current_user_can( $role ) ){
-		 				$can_capture = true;
+		 				$can_capture = 'cap 4';
 		 				break;
 		 			}
 		 		}
 		 	}
 		}
 
+		$can_trash = false;
+		if( !empty( $cf_io_config['trash_roles'] ) ){
+			if( !empty( $cf_io_config['trash_roles']['_all_roles'] ) ){
+				$can_trash = 'trash 3';
+			}else{
+				foreach( $cf_io_config['trash_roles'] as $role => $enabled ){
+					if( current_user_can( $role ) ){
+						$can_trash = 'trash 4';
+						break;
+					}
+				}
+			}
+		}
+
+
 		$can_edit = false;
 		if( !empty( $cf_io_config['edit_roles'] ) ){
 		 	if( !empty( $cf_io_config['edit_roles']['_all_roles'] ) ){
-		 		$can_edit = true;
+		 		$can_edit = 'edit 3';
 		 	}else{
 		 		foreach( $cf_io_config['edit_roles'] as $role => $enabled ){
 		 			if( current_user_can( $role ) ){
-		 				$can_edit = true;
+		 				$can_edit = 'edit 4';
 		 				break;
 		 			}
 		 		}
@@ -298,17 +339,17 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 		$can_view = false;
 		if( !empty( $cf_io_config['view_roles'] ) ){
 		 	if( !empty( $cf_io_config['view_roles']['_all_roles'] ) ){
-		 		$can_view = true;
+		 		$can_view = 'view 3';
 		 	}else{
 		 		foreach( $cf_io_config['view_roles'] as $role => $enabled ){
 		 			if( current_user_can( $role ) ){
-		 				$can_view = true;
+		 				$can_view = 'view 4';
 		 				break;
 		 			}
 		 		}
 		 	}
 		}
-		if( empty( $can_capture ) && empty( $can_edit ) && empty( $can_view ) ){
+		if( empty( $can_capture ) && empty( $can_edit ) && empty( $can_view ) && empty( $can_trash ) ){
 			$no_actions = true;
 		}
 		// pull in the table list

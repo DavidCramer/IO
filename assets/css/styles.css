@@ -489,6 +489,7 @@ th.ui-sortable-handle.ui-sortable-helper {
 }
 .cf-io-card-content .cf-io-card-actions .row-actions{
 	visibility: visible;
+  left: 0;
 }
 .cf-io-card-content .cf-io-card-actions .row-actions a{
 	text-decoration: none;

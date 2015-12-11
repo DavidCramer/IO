@@ -31,9 +31,9 @@
 	{{#unless params/filters}}
 	<label style="margin: 1px 12px 0px 0px;" class="button wp-baldrick" type="button" {{#if parent_id}}data-target="{{id}}"{{/if}} data-add-node="params.filters" data-node-default='{"type":"and"}'>Add Filter</label>
 	{{else}}
-	<label style="margin: 1px 12px 0px 0px;" class="button button-primary" data-remove-element=".filter-wrapper" type="button">Remove Filters</label>
+	<label style="margin: 1px 12px 0px 0px;" class="button button-primary" data-remove-element="#filter-wrapper-{{id}}" type="button">Remove Filters</label>
 	{{/unless}}
-	<?php if( true === $can_capture ){ ?>
+	<?php if( !empty( $can_capture ) ){ ?>
 		<?php if( is_admin() ){ ?>
 		{{#if parent_id}}
 		<?php } ?>
@@ -42,7 +42,7 @@
 				data-request="<?php echo site_url( "/cf-api/" ); ?>{{form}}/" 
 				data-load-element="#cf-io-save-indicator"
 				data-modal="newentry-{{form}}"
-				data-modal-title="<?php echo esc_attr( __('Add Entry', 'cf-io') ) ; ?>"
+				data-modal-title="<?php echo esc_attr( __('Add', 'cf-io') ) ; ?> {{@root/singular}}"
 				data-method="get"
 				data-modal-width="{{width}}"
 				data-modal-height="auto"
@@ -50,9 +50,9 @@
 				data-callback="calders_forms_init_conditions"		
 				data-io_parent="{{parent_id}}"
 				data-io_modal="{{id}}"
-				data-modal-buttons='Save Entry|{ "data-for" : "form.{{form}}" {{#if parent_id}},"data-io_parent" : "{{parent_id}}"{{/if}} {{#if relation_field}},"data-io_relation": "{{relation_field}}"{{/if}}{{#if relation_field_from}},"data-io_relation_from": "{{relation_field_from}}"{{/if}} }'
+				data-modal-buttons='Save {{@root/singular}}|{ "data-for" : "form.{{form}}" {{#if parent_id}},"data-io_parent" : "{{parent_id}}"{{/if}} {{#if relation_field}},"data-io_relation": "{{relation_field}}"{{/if}}{{#if relation_field_from}},"data-io_relation_from": "{{relation_field_from}}"{{/if}} }'
 			>
-				<?php _e('Add Entry', 'cf-io') ; ?>
+				<?php _e('Add', 'cf-io') ; ?> {{@root/singular}}
 			</button>
 			<input type="hidden" name="params[parent]" value="{{parent_id}}">
 			{{#if relation_field}}
@@ -66,7 +66,7 @@
 
 	<span>
 		Show <input type="number" class="screen-per-page" name="params[limit]" value="{{#if data/params/limit}}{{data/params/limit}}{{else}}20{{/if}}" id="cf-entries-list-items"> &nbsp;
-		<?php if( true === $can_edit ){ ?>
+		<?php if( !empty( $can_edit ) ){ ?>
 		<select style="vertical-align: initial;" name="params[action]" id="cf_bulk_action">
 			<option value="" selected="selected">Bulk Actions</option>
 			{{#is data/params/status value="active"}}
@@ -95,10 +95,9 @@
 		>Apply</button>
 		{{/unless}}
 	</span>
-	<span style="margin-left: 45px;"><input placeholder="<?php echo esc_attr( __('Search', 'cf-io' ) ); ?>" type="search" name="params[key_word]" value="{{data/params/key_word}}"></span>
 	
 </div>
-<div class="filter-wrapper">
+<div class="filter-wrapper" id="filter-wrapper-{{id}}">
 	{{#each params/filters}}
 		{{> filter_query_<?php echo $cf_io['id']; ?>}}
 	{{/each}}	
@@ -126,7 +125,7 @@
 <table class="widefat fixed striped io-table-viewer" id="list-table-{{id}}">
 	<thead>
 		<tr>
-			<?php if( true === $can_edit ){ ?>
+			<?php if( !empty( $can_edit ) || !empty( $can_trash ) ){ ?>
 			<th data-hide="phone,tablet" class="column-cb check-column" style="padding:11px 0 0 3px;">
 				<label for="cb-select-all-1" class="screen-reader-text">Select</label>
 				<input type="checkbox" class="io-bulkcheck">
@@ -161,7 +160,7 @@
 		{{#if data/entries}}
 			{{#each data/entries}}
 			<tr id="entry_row_{{id}}">
-				<?php if( true === $can_edit ){ ?>
+				<?php if( !empty( $can_edit ) ){ ?>
 				<td scope="row">
 					<input type="checkbox" value="{{id}}" name="params[entry][]" class="io-entrycheck" id="io-select-{{id}}">
 				</td>	
@@ -177,7 +176,7 @@
 				{{/each}}
 				<?php if( is_user_logged_in() && empty( $no_actions ) ){ ?>
 				<td style="text-align: right; white-space: nowrap;">
-				<?php if( true === $can_edit ){ ?>
+				<?php if( !empty( $can_trash ) ){ ?>
 					<button 
 					data-items="{{id}}" 
 					data-action="cf_bulk_action" 
@@ -198,16 +197,17 @@
 					Trash
 					{{/is}}
 					</button>
-
-					{{#if ../editing}}
+				<?php } ?>
+				<?php if( !empty( $can_edit ) ){ ?>
 					{{#is status value="active"}}
 					<button type="button" class="button button-small cfajax-trigger"
 						data-request="<?php echo site_url( "/cf-api/" ); ?>{{../form}}/{{id}}/" 
 						data-load-element="#cf-io-save-indicator"
 						data-modal="newentry-{{../form}}"
-						data-modal-title="<?php echo esc_attr( __('Edit Entry', 'cf-io') ) ; ?>"
+						data-modal-title="<?php echo esc_attr( __('Edit', 'cf-io') ) ; ?> {{@root/singular}}"
 						data-method="get"
 						data-modal-width="{{../width}}"
+						data-callback="calders_forms_init_conditions"
 						data-modal-height="auto"
 						data-modal-element="div"
 						data-static="true"
@@ -215,9 +215,8 @@
 						data-modal-buttons='Save Changes|{ "data-for" : "form.{{../form}}"{{#if ../parent_id}},"data-io_parent" : "{{../parent_id}}"{{/if}} {{#if ../relation_field}},"data-io_relation": "{{../relation_field}}"{{/if}} }'						
 					>Edit</button>
 					{{/is}}
-					{{/if}}
 				<?php } ?>
-				<?php if( true === $can_view ){ ?>
+				<?php if( !empty( $can_view ) ){ ?>
 					<button type="button" class="button button-small wp-baldrick"
 						data-action="get_entry"
 						data-io="{{../id}}"
@@ -245,12 +244,12 @@
 </table>
 {{#unless data}}
 
-	<div style="text-align: center; border: 1px solid rgb(223, 223, 223); padding: 20px; background: rgb(245, 245, 245) none repeat scroll 0% 0%;">Fetching Entries</div>
+	<div style="text-align: center; border: 1px solid rgb(223, 223, 223); padding: 20px; background: rgb(245, 245, 245) none repeat scroll 0% 0%;">Fetching {{plural}}</div>
 
 {{else}}
 	{{#unless data/entries}}
 
-		<div style="text-align: center; border: 1px solid rgb(223, 223, 223); padding: 20px; background: rgb(245, 245, 245) none repeat scroll 0% 0%;">No results found</div>
+		<div style="text-align: center; border: 1px solid rgb(223, 223, 223); padding: 20px; background: rgb(245, 245, 245) none repeat scroll 0% 0%;">No {{plural}} found</div>
 
 	{{/unless}}
 {{/unless}}

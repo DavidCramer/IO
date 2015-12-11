@@ -1,4 +1,20 @@
   		<div class="cf-io-config-group">
+			<label for="cf_io-singular">
+				<?php _e( 'Singular Term', 'cf-io' ); ?>
+			</label>
+			<input type="text" name="singular" data-style="background-singular" value="{{#if singular}}{{singular}}{{else}}Entry{{/if}}" id="cf_io-singular">
+		</div>
+
+  		<div class="cf-io-config-group">
+			<label for="cf_io-plural">
+				<?php _e( 'Plural Term', 'cf-io' ); ?>
+			</label>
+			<input type="text" name="plural" data-style="background-plural" value="{{#if plural}}{{plural}}{{else}}Entries{{/if}}" id="cf_io-plural">
+		</div>
+
+
+
+  		<div class="cf-io-config-group">
 			<label for="cf_io-color">
 				<?php _e( 'Base Color', 'cf-io' ); ?>
 			</label>

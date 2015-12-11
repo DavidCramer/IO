@@ -1,4 +1,18 @@
 <?php
+$can_capture = false;
+if( !empty( $cf_io['capture_roles'] ) ){
+	if( !empty( $cf_io['capture_roles']['_all_roles'] ) ){
+		$can_capture = 'cap 1';
+	}else{
+		foreach( $cf_io['capture_roles'] as $role => $enabled ){
+			if( current_user_can( $role ) ){
+				$can_capture = 'cap 2';
+				break;
+			}
+		}
+	}
+}
+
 
 if( empty( $cf_io['width'] ) ){
 	$cf_io['width'] = 550;
@@ -11,21 +25,21 @@ if( is_admin() ){
 			<?php //echo CFIO_VER; ?>
 		</span>
 		<span class="cf-io-nav-separator"></span>
-		<?php if( true === $can_capture ){ ?>
+		<?php if( !empty( $can_capture ) ){ ?>
 		<span class="add-new-h2 cfajax-trigger"
 			data-request="<?php echo site_url( "/cf-api/" . $cf_io['form'] ."/" ); ?>" 
 			data-load-element="#cf-io-save-indicator"
 			data-modal="newentry-{{form}}"
-			data-modal-title="<?php echo esc_attr( __('Add Entry', 'cf-io') ) ; ?>"
+			data-modal-title="<?php echo esc_attr( __('Add', 'cf-io') ) ; ?> {{singular}}"
 			data-method="get"
 			data-modal-width="<?php echo $cf_io['width']; ?>"
 			data-modal-height="auto"
 			data-modal-element="div"
 			data-io_modal="{{id}}"
 			data-callback="calders_forms_init_conditions"
-			data-modal-buttons='Save Entry|{ "data-for" : "form.<?php echo $cf_io['form']; ?>" }'
+			data-modal-buttons='Save {{singular}}|{ "data-for" : "form.<?php echo $cf_io['form']; ?>" }'
 		>
-			<?php _e('Add Entry', 'cf-io') ; ?>
+			<?php _e('Add', 'cf-io') ; ?> {{singular}}
 		</span>
 		<span class="cf-io-nav-separator"></span>
 		<?php } ?>
@@ -45,7 +59,7 @@ if( is_admin() ){
 	<ul class="cf-io-sub-tabs cf-io-nav-tabs">
 				<li class="{{#is _current_tab value="#cf-io-panel-form"}}active {{/is}}cf-io-nav-tab">
 			<a href="#cf-io-panel-form">
-				<?php _e('Entries', 'cf-io') ; ?>
+				{{plural}}
 			</a>
 		</li>
 
@@ -60,6 +74,8 @@ if( is_admin() ){
 
 	<input type="hidden" value="{{_current_tab}}" name="_current_tab" id="cf-io-active-tab">
 	<input type="hidden" value="{{json fields}}" name="fields">
+	<input type="hidden" value="{{plural}}" name="plural">
+	<input type="hidden" value="{{singular}}" name="singular">
 	<input type="hidden" value="{{form}}" name="form">
 	<input type="hidden" value="{{editing}}" name="editing">
 	<input type="hidden" value="{{capture}}" name="capture">
@@ -68,16 +84,15 @@ if( is_admin() ){
 	<input type="hidden" value="{{title_prefix}}" name="title_prefix">
 	<input type="hidden" value="{{json title}}" name="title">
 	<input type="hidden" value="{{color}}" name="color">
-	<input type="hidden" value="{{entry_tab}}" name="entry_tab">
 	
 	{{#if relation_field}}
 	<input type="hidden" value="{{relation_field}}" name="relation_field">
 	{{/if}}
 	<div id="cf-io-panel-form" class="cf-io-editor-panel" {{#is _current_tab value="#cf-io-panel-form"}}{{else}} style="display:none;" {{/is}}>		
 		<h4>
-			<?php _e('Entry Browser', 'cf-io') ; ?>
+			{{singular}} <?php _e('Browser', 'cf-io') ; ?>
 			<small class="description">
-				<?php _e('Entries', 'cf-io') ; ?>
+				{{plural}}
 			</small>
 		</h4>
 		<?php

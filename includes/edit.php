@@ -8,7 +8,7 @@
  * @link
  * @copyright 2015 David Cramer
  */
-
+$io_editor = true;
 $cf_io = \calderawp\cfio\options::get_single( strip_tags( $_GET['edit'] ) );
 $cf_ios = \calderawp\cfio\options::get_registry();
 
@@ -54,7 +54,12 @@ wp_enqueue_script( 'cf-field' );
 wp_enqueue_script( 'cf-conditionals' );
 wp_enqueue_script( 'cf-validator' );
 wp_enqueue_script( 'cf-init' );
+
+
+// magic tags
+io_build_magic_tags( $cf_io );
 ?>
+
 <div class="wrap cf-io-calderamain-canvas" id="cf-io-main-canvas">
 	<span class="wp-baldrick spinner" style="float: none; display: block;" data-target="#cf-io-main-canvas" data-before="cfio_canvas_reset" data-callback="cfio_canvas_init" data-type="json" data-request="#cf-io-live-config" data-event="click" data-template="#main-ui-template" data-autoload="true"></span>
 </div>
