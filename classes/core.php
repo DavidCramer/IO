@@ -619,7 +619,7 @@ class core {
 	 */
 	public function get_bound_io() {
 		global $post;
-		if( $post->post_type !== 'page'){ return; }
+		if( empty( $post) || $post->post_type !== 'page'){ return; }
 
 		$pagebinds = \calderawp\cfio\options::get_single( 'io_page_binds' );
 		if( !empty( $pagebinds['pages'] ) ){
