@@ -10,7 +10,7 @@
 			<label for="cf_io-view">
 				<?php _e( 'Enable View', 'cf-io' ); ?>
 			</label>
-			<label style="width: auto; margin: 6px 0px 0px;"><input type="checkbox" name="view" data-live-sync="true" value="1" {{#if view}}checked="checked"{{/if}} id="cf_io-view"> <?php _e('Show the Edit button on entries','cf-io'); ?></label>
+			<label style="width: auto; margin: 6px 0px 0px;"><input type="checkbox" name="view" data-live-sync="true" value="1" {{#if view}}checked="checked"{{/if}} id="cf_io-view"> <?php _e('Show the View button on entries','cf-io'); ?></label>
 		</div>
 		
 		{{#if view}}

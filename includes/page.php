@@ -16,7 +16,7 @@ $cf_io['params']['filters'] = array();
 
 // clear out saved forms
 $cf_io['forms'] = array();
-$cf_io['forms'][ $cf_io['form'] ] = \Caldera_Forms::get_form( $cf_io['form'] );
+$cf_io['forms'][ $cf_io['form'] ] = apply_filters( 'caldera_forms_render_get_form', \Caldera_Forms::get_form( $cf_io['form'] ) );
 
 ?>
 <style type="text/css">
@@ -292,7 +292,7 @@ jQuery('#newentry-<?php echo $cf_io_config['form']; ?>_baldrickModalCloser,.io-e
 		
 		// clear out saved forms
 		$cf_io_config['forms'] = array();
-		$cf_io_config['forms'][ $cf_io_config['form'] ] = \Caldera_Forms::get_form( $cf_io_config['form'] );
+		$cf_io_config['forms'][ $cf_io_config['form'] ] = apply_filters( 'caldera_forms_render_get_form', \Caldera_Forms::get_form( $cf_io_config['form'] ) );
 
 		$can_capture = false;
 		if( !empty( $cf_io_config['capture_roles'] ) ){
