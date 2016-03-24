@@ -73,6 +73,10 @@ function io_build_magic_tags( $cf_io ){
 }
 
 function io_build_card( $cf_io, $child = false ){
+	$forms = Caldera_Forms::get_forms();
+	if( empty( $forms[ $cf_io['form'] ] ) ){
+		return;
+	}
 	if( true === $child ){
 		$cf_io['icon'] = 'dashicons-arrow-right-alt2';
 	}else{
@@ -92,10 +96,10 @@ function io_build_card( $cf_io, $child = false ){
 			<div class="cf-io-card-actions">
 				<div class="row-actions">
 					<span class="edit">
-						<a href="?page=cf_io&amp;download=<?php echo $cf_io[ 'id' ]; ?>&cf-io-export=<?php echo wp_create_nonce( 'cf-io' ); ?>" target="_blank"><?php _e('Export', 'cf-io'); ?></a> |
+						<a href="?page=cf_io&amp;edit=<?php echo $cf_io[ 'id' ]; ?>"><?php _e('Edit', 'cf-io'); ?></a> |
 					</span>
 					<span class="edit">
-						<a href="?page=cf_io&amp;edit=<?php echo $cf_io[ 'id' ]; ?>"><?php _e('Edit', 'cf-io'); ?></a> |
+						<a href="?page=cf_io&amp;download=<?php echo $cf_io[ 'id' ]; ?>&cf-io-export=<?php echo wp_create_nonce( 'cf-io' ); ?>" target="_blank"><?php _e('Export', 'cf-io'); ?></a> |
 					</span>
 					<span class="trash confirm">
 						<a href="?page=cf_io&amp;delete=<?php echo $cf_io[ 'id' ]; ?>" data-block="<?php echo $cf_io[ 'id' ]; ?>" class="submitdelete">
@@ -116,28 +120,20 @@ function io_build_card( $cf_io, $child = false ){
 		<?php			
 		echo "</td>";
 		echo "<td>";
-			echo $cf_io['form'];
-
-
-			
-			if( false === $child ){
-				$args = array( 					
-					'name' => 'bind-' . $cf_io[ 'id' ], 
-					'class' => 'page-bind',
-					'show_option_none' => ' ',
-					'option_none_value' => 0
-				);
-				if( !empty( $pagebinds['pages'][ $cf_io[ 'id' ] ] ) ){
-					$args['selected'] = $pagebinds['pages'][ $cf_io[ 'id' ] ];
-				}
-
-				echo '<div data-id="' . $cf_io[ 'id' ] . '" class="description">';
-				wp_dropdown_pages( $args );
-				echo '</div>';
-			}
-			
-
+			echo $forms[ $cf_io['form'] ]['name'];
+		echo "</td>";
 		
+		echo "<td>";
+			if( false === $child ){
+				if( !empty( $cf_io['page'] ) ){
+					$page = get_page( $cf_io['page'] );
+					echo '<a href="' . get_permalink( $page->ID ) . '" target="_blank">' . $page->post_title . '</a>';
+				}elseif( !empty( $cf_io['icon'] ) ){
+					echo esc_html__( 'Admin Menu', 'io' );
+				}				
+			}else{
+				echo esc_html__( 'Relation', 'io' );
+			}
 		echo "</td>";
 
 	echo '</tr>';

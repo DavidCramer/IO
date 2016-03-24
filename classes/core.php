@@ -622,39 +622,41 @@ class core {
 
 		if( empty( $post) || $post->post_type !== 'page'){ return; }
 
-		$pagebinds = \calderawp\cfio\options::get_single( 'io_page_binds' );
-		if( !empty( $pagebinds['pages'] ) ){
-			foreach ( $pagebinds['pages'] as $io_id => $page_id) {
-				if( $post->ID == $page_id ){
-					$cf_io = \calderawp\cfio\options::get_single( $io_id );
-					if( empty( $cf_io['access_roles'] ) ){
-						break;
-					}
-					// check public
-					$current_user = wp_get_current_user();
-					if( empty( $current_user ) || empty( $current_user->ID ) ){
-						if( !empty( $cf_io['access_roles']['_public'] ) ){
-							return $io_id;
-						}
-						break;
-					}
+		$cf_ios = \calderawp\cfio\options::get_registry();
+		$ios = array();
+		foreach( $cf_ios as $io_id=>$io ){
+			if( !empty( $io['page'] ) && $post->ID == $io['page'] ){
 
-					$has_access = false;
-					foreach( $cf_io['access_roles'] as $checkrole => $checken ){
-						if( current_user_can( $checkrole ) ){
-							$has_access = $checkrole;
-							break;
-						}
-					}
-					if( empty( $has_access ) ){
-						break;
-					}
-
-
-					return $io_id;
+				$cf_io = \calderawp\cfio\options::get_single( $io_id );
+				if( empty( $cf_io['access_roles'] ) ){
+					continue;
 				}
+				// check public
+				$current_user = wp_get_current_user();
+				if( empty( $current_user ) || empty( $current_user->ID ) ){
+					if( !empty( $cf_io['access_roles']['_public'] ) ){
+						$ios[] = $io_id;
+					}
+					continue;
+				}
+
+				$has_access = false;
+				foreach( $cf_io['access_roles'] as $checkrole => $checken ){
+					if( current_user_can( $checkrole ) ){
+						$has_access = $checkrole;
+						continue;
+					}
+				}
+				if( empty( $has_access ) ){
+					continue;
+				}				
+
+				$ios[] = $io_id;
 			}
-		}		
+		}
+		if( !empty( $ios ) ){
+			return $ios;
+		}
 		return false;
 	}
 
@@ -667,27 +669,29 @@ class core {
 	 */
 	public function enqueue_front_stylescripts() {
 
-		$io_id = $this->get_bound_io();
-		if( false === $io_id ){return;}
+		$io_ids = $this->get_bound_io();
+		
+		if( empty( $io_ids ) ){return;}
 
 		// yup -- do it!
-		$registry = \calderawp\cfio\options::get_registry();
-		if( !empty( $registry[ $io_id ]['form'] ) ){
+		if( !empty( $io_ids ) ){
 			wp_deregister_script( 'cf-dynamic' );
 			add_filter( 'caldera_forms_script_urls', array( $this, 'front_scripts' ) );
 			add_filter( 'caldera_forms_style_urls', array( $this, 'front_styles' ) );
 			\Caldera_Forms::cf_init_system();
 			add_filter( 'the_content', function( $content ){
 
+				$formbases = $this->get_bound_io();
 				ob_start();
-				$form_base = $this->get_bound_io();
-				include CFIO_PATH . 'includes/page.php';
+				foreach( $formbases as $form_base ){				
+					include CFIO_PATH . 'includes/page.php';
+				}
 				$content .= ob_get_clean();
 				
 				wp_enqueue_style( 'cf-field-styles', CFCORE_URL . 'assets/css/fields.min.css', array() );
 
 			
-				//wp_enqueue_style( 'cf_io-front-core', CFIO_URL . 'assets/css/styles.css' );
+				wp_enqueue_style( 'cf_io-front-core', CFIO_URL . 'assets/css/styles.css' );
 				wp_enqueue_style( 'cf_io-front-theme', CFIO_URL . 'assets/css/jquery-ui.min.css' );
 
 				wp_enqueue_style( 'cf_io-baldrick-modals', CFIO_URL . 'assets/css/modals.css' );

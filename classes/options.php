@@ -159,6 +159,9 @@ class options {
 			if( !empty( $config['relation'] ) ){
 				$update['relation'] = $config['relation'];
 			}
+			if( !empty( $config['page'] ) ){
+				$update['page'] = $config['page'];
+			}
 			if( !empty( $config['lock_form'] ) ){
 				$update['lock_form'] = $config['lock_form'];
 			}

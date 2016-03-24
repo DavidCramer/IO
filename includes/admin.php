@@ -31,7 +31,8 @@
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'Interface', 'io' ); ?></th>
-				<th><?php esc_html_e( 'Form ID', 'io' ); ?></th>
+				<th><?php esc_html_e( 'Form', 'io' ); ?></th>
+				<th><?php esc_html_e( 'Location', 'io' ); ?></th>
 			</tr>
 		</thead>
 
@@ -104,17 +105,6 @@
 
 	}
 
-	jQuery('.page-bind').change( function(){
-		var select = jQuery( this ),
-			data = {
-				action 	: 'cfio_bind_io',
-				id		: select.parent().data('id'),
-				page	: select.val()
-			};
-		jQuery.post( ajaxurl, data, function(res){
-			console.log( res );
-		});
-	});
 
 	function bds_redirect_to_cf_io(obj){
 		

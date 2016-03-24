@@ -76,15 +76,34 @@
 			<label for="cf_io-location">
 				<?php _e( 'Menu Location', 'cf-io' ); ?>
 			</label>
-			<select style="width:395px;" name="location" data-live-sync="true" id="cf-io-form-form">
+			<select style="width:190px;" name="location" data-live-sync="true" id="cf-io-form-form">
 				<option></option>
 				<option value="primary" {{#is location value="primary"}}selected="selected"{{/is}}>Primary</option>
 				<option value="child" {{#is location value="child"}}selected="selected"{{/is}}>Child</option>
+				<option value="page" {{#is location value="page"}}selected="selected"{{/is}}>Page</option>
 				<option value="relation" {{#is location value="relation"}}selected="selected"{{/is}}>Relation</option>
 			</select>
 
 		</div>
 
+		{{#is location value="page"}}
+  		<div class="cf-io-config-group">
+			<label for="cf_io-page">
+				<?php _e( 'Menu Parent', 'cf-io' ); ?>
+			</label>
+			<?php
+				$args = array( 					
+					'id' => 'bind-' . $cf_io[ 'id' ],
+					'name' => 'page', 
+					'class' => 'page-bind',
+				);				
+				wp_dropdown_pages( $args );				
+			?>
+			{{#script}}
+			jQuery('#bind-<?php echo $cf_io[ 'id' ]; ?>').val('{{page}}');
+			{{/script}}
+		</div>
+		{{/is}}
 
 		{{#is location value="primary"}}
   		<div class="cf-io-config-group">
