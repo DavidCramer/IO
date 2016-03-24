@@ -27,27 +27,37 @@
 		</h1>
 	</div>
 
-<?php
+	<table class="wp-list-table widefat fixed striped pages">
+		<thead>
+			<tr>
+				<th><?php esc_html_e( 'Interface', 'io' ); ?></th>
+				<th><?php esc_html_e( 'Form ID', 'io' ); ?></th>
+			</tr>
+		</thead>
 
-	$cf_ios = \calderawp\cfio\options::get_registry();
-	if( empty( $cf_ios ) ){
-		$cf_ios = array();
-	}
+		<tbody>
+		<?php
 
-	global $wpdb;
-	
-	foreach( $cf_ios as $cf_io_id => $cf_io ){
-		if( empty( $cf_io['icon'] ) ){
-			$cf_io['icon'] = 'dashicons-admin-generic';
-		}
-		if( !empty( $cf_io['relation'] ) ){
-			continue;
-		}
-	echo '<div class="cf-io-interface-wrapper">';
-	io_build_card( $cf_io );
-	echo '</div>';
+			$cf_ios = \calderawp\cfio\options::get_registry();
+			if( empty( $cf_ios ) ){
+				$cf_ios = array();
+			}
 
-	} ?>
+			global $wpdb;
+			
+			foreach( $cf_ios as $cf_io_id => $cf_io ){
+
+				if( empty( $cf_io['icon'] ) ){
+					$cf_io['icon'] = 'dashicons-admin-generic';
+				}
+				if( !empty( $cf_io['relation'] ) ){
+					continue;
+				}
+				io_build_card( $cf_io );
+
+			} ?>
+		</tbody>
+	</table>
 
 </div>
 <div class="clear"></div>
@@ -124,6 +134,7 @@
 		if( obj.data.success ){
 			jQuery( '#cf_io-' + obj.data.data.block ).fadeOut(function(){
 				jQuery(this).remove();
+				jQuery( '#toplevel_page_cf_io-' + obj.data.data.block ).slideUp();
 			});
 		}else{
 			alert('<?php echo __('Sorry, something went wrong. Try again.', 'cf-io'); ?>');

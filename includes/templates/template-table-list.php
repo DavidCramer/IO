@@ -29,9 +29,9 @@
 <div style="" class="caldera-entry-exporter">
 
 	{{#unless params/filters}}
-	<label style="margin: 1px 12px 0px 0px;" class="button wp-baldrick" type="button" {{#if parent_id}}data-target="{{id}}"{{/if}} data-add-node="params.filters" data-node-default='{"type":"and"}'>Add Filter</label>
+	<button type="button" style="margin: 1px 12px 0px 0px;" class="button wp-baldrick" type="button" {{#if parent_id}}data-target="{{id}}"{{/if}} data-add-node="params.filters" data-node-default='{"type":"and"}'>Add Filter</button>
 	{{else}}
-	<label style="margin: 1px 12px 0px 0px;" class="button button-primary" data-remove-element="#filter-wrapper-{{id}}" type="button">Remove Filters</label>
+	<button type="button" style="margin: 1px 12px 0px 0px;" class="button button-primary" data-remove-element="#filter-wrapper-{{id}}" type="button">Remove Filters</button>
 	{{/unless}}
 	<?php if( !empty( $can_capture ) ){ ?>
 		<?php if( is_admin() ){ ?>
@@ -102,7 +102,7 @@
 		{{> filter_query_<?php echo $cf_io['id']; ?>}}
 	{{/each}}	
 	{{#if params/filters}}
-		<label class="button filter-add-and wp-baldrick" type="button" {{#if parent_id}}data-target="{{id}}"{{/if}} data-add-node="params.filters" data-node-default='{"type":"and"}'>And</label>
+		<button type="button" class="button filter-add-and wp-baldrick" type="button" {{#if parent_id}}data-target="{{id}}"{{/if}} data-add-node="params.filters" data-node-default='{"type":"and"}'>And</button>
 		<button class="button filter-add-and cf-bulk-action wp-baldrick io-entry-loader io-entry-loader-{{form}}" type="button"
 			style="margin: 3px 3px 10px 12px;"
 			data-page="1"

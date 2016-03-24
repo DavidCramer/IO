@@ -219,7 +219,9 @@ jQuery( function($){
 		$('[data-auto-focus]').focus().select();
 
 		// rebuild tags
-		cfio_rebuild_magics();
+		if( typeof cfio_rebuild_magics === 'function' ){
+			cfio_rebuild_magics();
+		}
 
 		jQuery(document).trigger('canvas_init');
 	}
@@ -290,106 +292,107 @@ jQuery( function($){
 		jQuery('#cf-io-live-config').val( JSON.stringify( cfio_config_object ) );
 		jQuery('#cf-io-field-sync').trigger('refresh');	
 	};
-	// sutocomplete category
-	$.widget( "custom.catcomplete", $.ui.autocomplete, {
-		_create: function() {
-			this._super();
-			this.widget().menu( "option", "items", "> :not(.ui-autocomplete-category)" );
-		},
-		_renderMenu: function( ul, items ) {
-			var that = this,
-			currentCategory = "";
-			$.each( items, function( index, item ) {
-				var li;
-				if ( item.category != currentCategory ) {
-					ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
-					currentCategory = item.category;
+	// autocomplete category
+	if( typeof $.ui !== 'undefined' ){
+		$.widget( "custom.catcomplete", $.ui.autocomplete, {
+			_create: function() {
+				this._super();
+				this.widget().menu( "option", "items", "> :not(.ui-autocomplete-category)" );
+			},
+			_renderMenu: function( ul, items ) {
+				var that = this,
+				currentCategory = "";
+				$.each( items, function( index, item ) {
+					var li;
+					if ( item.category != currentCategory ) {
+						ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
+						currentCategory = item.category;
+					}
+					li = that._renderItemData( ul, item );
+					if ( item.category ) {
+						li.attr( "aria-label", item.category + " : " + item.label );
+					}
+				});
+			}
+		});
+		cfio_rebuild_magics = function(){
+
+			function split( val ) {
+				return val.split( / \s*/ );
+			}
+			function extractLast( term ) {
+				return split( term ).pop();
+			}
+			$( ".magic-tag-enabled" ).bind( "keydown", function( event ) {
+				if ( event.keyCode === $.ui.keyCode.TAB && $( this ).catcomplete( "instance" ).menu.active ) {
+					event.preventDefault();
 				}
-				li = that._renderItemData( ul, item );
-				if ( item.category ) {
-					li.attr( "aria-label", item.category + " : " + item.label );
+			}).catcomplete({
+				minLength: 0,
+				source: function( request, response ) {
+					// delegate back to autocomplete, but extract the last term
+					cfio_magic_tags = [];
+					var category = '',
+						tags = $('.cf-io-magic-tags-definitions');
+
+					if( tags.length ){
+
+						for( var tag_set = 0; tag_set < tags.length; tag_set++ ){
+
+							var magic_tags;
+							
+							category = 'Magic Tags';
+
+							if( $( tags[ tag_set ] ).data('category') ){
+								category = $( tags[ tag_set ] ).data('category');
+							}
+							// set internal tags
+							try{
+								magic_tags = JSON.parse( tags[ tag_set ].value );
+							} catch (e) {
+								magic_tags = [ $(tags[ tag_set ]).data('tag') ];
+							}
+
+							var display_label;
+							for( f = 0; f < magic_tags.length; f++ ){
+								display_label = magic_tags[f].split( '|' );
+								if( display_label[1] ){
+									magic_tags[f] = display_label[0] + ':' + display_label[1];
+									display_label = display_label[1];
+								}else{
+									display_label = '{' + display_label + '}';
+								}
+								cfio_magic_tags.push( { label: display_label,value: '{' + magic_tags[f] + '}', category: category }  );
+							}
+						}
+
+					}
+
+					response( $.ui.autocomplete.filter( cfio_magic_tags, extractLast( request.term ) ) );
+				},
+				focus: function() {
+					// prevent value inserted on focus
+					return false;
+				},
+				select: function( event, ui ) {
+					var start = this.value.length;
+					var terms = split( this.value );
+					// remove the current input
+					terms.pop();
+					// add the selected item
+					terms.push( ui.item.value );
+					// add placeholder to get the comma-and-space at the end
+					//terms.push( "" );
+					this.value = terms.join( " " );
+
+					// get selection
+					this.selectionStart = start+ui.item.value.split('*')[0].length;
+					this.selectionEnd = this.selectionStart + 1;
+					return false;
 				}
 			});
 		}
-	});
-	cfio_rebuild_magics = function(){
-
-		function split( val ) {
-			return val.split( / \s*/ );
-		}
-		function extractLast( term ) {
-			return split( term ).pop();
-		}
-		$( ".magic-tag-enabled" ).bind( "keydown", function( event ) {
-			if ( event.keyCode === $.ui.keyCode.TAB && $( this ).catcomplete( "instance" ).menu.active ) {
-				event.preventDefault();
-			}
-		}).catcomplete({
-			minLength: 0,
-			source: function( request, response ) {
-				// delegate back to autocomplete, but extract the last term
-				cfio_magic_tags = [];
-				var category = '',
-					tags = $('.cf-io-magic-tags-definitions');
-
-				if( tags.length ){
-
-					for( var tag_set = 0; tag_set < tags.length; tag_set++ ){
-
-						var magic_tags;
-						
-						category = 'Magic Tags';
-
-						if( $( tags[ tag_set ] ).data('category') ){
-							category = $( tags[ tag_set ] ).data('category');
-						}
-						// set internal tags
-						try{
-							magic_tags = JSON.parse( tags[ tag_set ].value );
-						} catch (e) {
-							magic_tags = [ $(tags[ tag_set ]).data('tag') ];
-						}
-
-						var display_label;
-						for( f = 0; f < magic_tags.length; f++ ){
-							display_label = magic_tags[f].split( '|' );
-							if( display_label[1] ){
-								magic_tags[f] = display_label[0] + ':' + display_label[1];
-								display_label = display_label[1];
-							}else{
-								display_label = '{' + display_label + '}';
-							}
-							cfio_magic_tags.push( { label: display_label,value: '{' + magic_tags[f] + '}', category: category }  );
-						}
-					}
-
-				}
-
-				response( $.ui.autocomplete.filter( cfio_magic_tags, extractLast( request.term ) ) );
-			},
-			focus: function() {
-				// prevent value inserted on focus
-				return false;
-			},
-			select: function( event, ui ) {
-				var start = this.value.length;
-				var terms = split( this.value );
-				// remove the current input
-				terms.pop();
-				// add the selected item
-				terms.push( ui.item.value );
-				// add placeholder to get the comma-and-space at the end
-				//terms.push( "" );
-				this.value = terms.join( " " );
-
-				// get selection
-				this.selectionStart = start+ui.item.value.split('*')[0].length;
-				this.selectionEnd = this.selectionStart + 1;
-				return false;
-			}
-		});
 	}
-
 	cfio_init_wp_editors = function(){
 
 		if( typeof tinyMCEPreInit === 'undefined'){
@@ -447,7 +450,7 @@ jQuery( function($){
 	// trash 
 	$(document).on('click', '.cf-io-card-actions .confirm a', function(e){
 		e.preventDefault();
-		var parent = $(this).closest('.cf-io-card-content');
+		var parent = $(this).closest('td');
 			actions = parent.find('.row-actions');
 
 		actions.slideToggle(300);

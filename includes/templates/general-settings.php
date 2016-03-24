@@ -57,6 +57,8 @@
 				}
 
 				?>
+				<label style="display: block; width: 200px;"><input type="checkbox" class="field-config form_role_role_check gen_role_check" data-set="form_role" name="access_roles[_public]" value="1"  {{#if access_roles/_public}}checked="checked"{{/if}}> <?php echo esc_html__( 'Public (not logged in)', 'io' ); ?></label>
+
 				<hr>
 				</div>
 			</div>	

@@ -49,6 +49,41 @@ class settings extends core{
 		// add auto populate template
 		add_action ("caldera_forms_autopopulate_type_config", array( $this, "autopopulate_config" ) );
 
+		// update page binds
+		add_action( 'wp_ajax_cfio_bind_io', function(){
+
+			$pagebinds_tag = 'io_page_binds';
+			$pagebinds = options::get_single( $pagebinds_tag );
+			if( empty( $pagebinds ) ){
+				$pagebinds = array();
+			}
+
+			$ios = options::get_registry();
+			if( empty( $ios ) ){
+				$ios = array();
+			}
+			// check for removed ios
+			foreach( $pagebinds as $io_id => $binding ){
+				if( empty( $ios[ $io_id ] ) ){
+					unset( $pagebinds[ $io_id ] );
+				}
+			}
+			if( empty( $ios[ $_POST['id'] ] ) ){
+				wp_send_json_error( array( 'message' => 'invalid page id' ) );
+			}
+			$io_id = $ios[ $_POST['id'] ]['id'];
+			$pagebinds[ $io_id ] = (int) $_POST['page'];
+
+			// save it
+			$page_bind_object = array(
+				'id' => $pagebinds_tag,
+				'pages' => $pagebinds
+			);
+			options::update( $page_bind_object );
+
+			wp_send_json_success( [ 'message' => 'complete' ] );
+		});
+
 	}
 
 

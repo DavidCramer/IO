@@ -619,15 +619,39 @@ class core {
 	 */
 	public function get_bound_io() {
 		global $post;
+
 		if( empty( $post) || $post->post_type !== 'page'){ return; }
 
 		$pagebinds = \calderawp\cfio\options::get_single( 'io_page_binds' );
 		if( !empty( $pagebinds['pages'] ) ){
 			foreach ( $pagebinds['pages'] as $io_id => $page_id) {
 				if( $post->ID == $page_id ){
+					$cf_io = \calderawp\cfio\options::get_single( $io_id );
+					if( empty( $cf_io['access_roles'] ) ){
+						break;
+					}
+					// check public
+					$current_user = wp_get_current_user();
+					if( empty( $current_user ) || empty( $current_user->ID ) ){
+						if( !empty( $cf_io['access_roles']['_public'] ) ){
+							return $io_id;
+						}
+						break;
+					}
+
+					$has_access = false;
+					foreach( $cf_io['access_roles'] as $checkrole => $checken ){
+						if( current_user_can( $checkrole ) ){
+							$has_access = $checkrole;
+							break;
+						}
+					}
+					if( empty( $has_access ) ){
+						break;
+					}
+
 
 					return $io_id;
-
 				}
 			}
 		}		
@@ -654,12 +678,26 @@ class core {
 			add_filter( 'caldera_forms_style_urls', array( $this, 'front_styles' ) );
 			\Caldera_Forms::cf_init_system();
 			add_filter( 'the_content', function( $content ){
+
 				ob_start();
 				$form_base = $this->get_bound_io();
 				include CFIO_PATH . 'includes/page.php';
 				$content .= ob_get_clean();
+				
+				wp_enqueue_style( 'cf-field-styles', CFCORE_URL . 'assets/css/fields.min.css', array() );
 
-				//wp_enqueue_script( 'io-base', CFIO_URL . 'assets/js/scripts.js', array( 'cf-baldrick' ) , false );
+			
+				//wp_enqueue_style( 'cf_io-front-core', CFIO_URL . 'assets/css/styles.css' );
+				wp_enqueue_style( 'cf_io-front-theme', CFIO_URL . 'assets/css/jquery-ui.min.css' );
+
+				wp_enqueue_style( 'cf_io-baldrick-modals', CFIO_URL . 'assets/css/modals.css' );
+				wp_enqueue_script( 'cf_io-handlebars', CFIO_URL . 'assets/js/handlebars.js' );
+				
+				wp_enqueue_style( 'cf_io-footable-style', CFIO_URL . 'assets/css/footable.core.min.css' );
+				wp_enqueue_script( 'cf_io-footable-script', CFIO_URL . 'assets/js/footable.min.js', array( 'jquery' ) , false );
+
+
+				wp_enqueue_script( 'io-base', CFIO_URL . 'assets/js/scripts.js', array( 'jquery', 'cf-baldrick' ) , false );
 				wp_localize_script( 'cf-dynamic', 'ajaxurl', admin_url( 'admin-ajax.php' ) );
 				
 				wp_enqueue_script( 'cf-dynamic' );
