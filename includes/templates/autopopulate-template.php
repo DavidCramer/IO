@@ -5,20 +5,23 @@ if( empty( $element['io_auto_populate'] ) ){
 
 // build a list of forms and fields
 $form_db = array();
-$forms = Caldera_Forms::get_forms();
+$forms = Caldera_Forms_Forms::get_forms( true ) ;
 foreach( $forms as $form ){
 
 	if( $form['ID'] == $element['ID'] ){
 		continue;
 	}
 
-	$form = Caldera_Forms::get_form( $form['ID'] );
+ 	$form = Caldera_Forms_Forms::get_form( $form['ID'] );
 
-	$form_db[ $form['ID'] ] = array(
-		'ID'  	=> $form['ID'],
-		'name'	=> $form['name'],
-		'fields'=> $form['fields'],
-	);
+	if( is_array( $form ) && isset( $form[ 'fields'] ) ){
+		$form_db[ $form['ID'] ] = array(
+			'ID'  	=> $form['ID'],
+			'name'	=> $form['name'],
+			'fields'=> $form['fields'],
+		);
+	}
+
 
 }
 ?>
