@@ -24,9 +24,9 @@ if( is_admin() ){
 		<span class="cf-io-version">
 			<?php //echo CFIO_VER; ?>
 		</span>
-		<span class="cf-io-nav-separator"></span>
+		
 		<?php if( !empty( $can_capture ) ){ ?>
-		<span class="add-new-h2 cfajax-trigger"
+		<a class="add-new-h2 cfajax-trigger"
 			data-request="<?php echo site_url( "/cf-api/" . $cf_io['form'] ."/" ); ?>" 
 			data-load-element="#cf-io-save-indicator"
 			data-modal="newentry-{{form}}"
@@ -40,7 +40,7 @@ if( is_admin() ){
 			data-modal-buttons='Save {{singular}}|{ "data-for" : "form.<?php echo $cf_io['form']; ?>" }'
 		>
 			<?php _e('Add', 'cf-io') ; ?> {{singular}}
-		</span>
+		</a>
 		<span class="cf-io-nav-separator"></span>
 		<?php } ?>
 
